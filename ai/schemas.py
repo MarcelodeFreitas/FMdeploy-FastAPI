@@ -45,14 +45,28 @@ class ShowAI(BaseModel):
     python_script_name: Optional[str] = None
     python_script_path: Optional[str] = None
     timestamp: datetime 
-    last_updated: Optional[str] = None
+    last_updated: Optional[datetime] = None
 
     class Config():
         orm_mode = True
 
-# class UpdatePythonScript(BaseModel):
-#     name: str
-#     path: str
+class User(BaseModel):
+    user_id: str
+    name: str
+    email: str
+    password: str
 
-#     class Config():
-#         orm_mode = True
+class ShowUser(BaseModel):
+    user_id: str
+    name: str
+    email: str
+
+    class Config():
+        orm_mode = True
+
+class UpdateUser(BaseModel):
+    name: str
+    email: str
+
+    class Config():
+        orm_mode = True

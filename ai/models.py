@@ -37,7 +37,6 @@ class AI(Base):
 class ModelFile(Base):
     __tablename__ = 'modelfile'
     model_file_id = Column(Integer, primary_key=True, index=True)
-    fk_model_id = Column(Integer, ForeignKey('ai.ai_id'))
-    path = Column(String, nullable=False)
+    fk_ai_id = Column(Integer, ForeignKey('ai.ai_id'))
     name = Column(String, nullable=False)
-    description = Column(String, nullable=True)
+    path = Column(String, nullable=False)
