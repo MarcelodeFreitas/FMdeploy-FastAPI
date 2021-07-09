@@ -10,4 +10,4 @@ class AI(BaseModel):
     python_script_path: str
     output_type: str
     is_private: bool
-    created_in: datetime
+    timestamp: datetime

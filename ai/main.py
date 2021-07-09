@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, File, UploadFile
+from fastapi import FastAPI, Depends, File, UploadFile, status
 from fastapi.responses import HTMLResponse
 from . import schemas, models
 from .database import engine
@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from .database import get_db
 from typing import List
 import shutil
+from datetime import datetime
 
 
 app = FastAPI()
@@ -15,13 +16,31 @@ app = FastAPI()
 #if not, the table is created
 models.Base.metadata.create_all(engine)
 
-@app.post('/ai')
+#create ai model
+@app.post('/ai', status_code = status.HTTP_201_CREATED)
 def create(request: schemas.AI, db: Session = Depends(get_db)):
-    new_ai = models.AI(title=request.title, description=request.description, output_type=request.output_type,  python_script_path=request.python_script_path,python_script_name=request.python_script_name,is_private=request.is_private)
+    new_ai = models.AI(title=request.title, description=request.description, output_type=request.output_type,  python_script_path=request.python_script_path,python_script_name=request.python_script_name,is_private=request.is_private, timestamp=request.timestamp)
     db.add(new_ai)
     db.commit()
     db.refresh(new_ai)
+    return new_ai
 
+#get all ai models
+@app.get('/ai')
+def get_all_ai(db: Session = Depends(get_db)):
+    ai_list = db.query(models.AI).all()
+    return ai_list
+
+#get ai model by id
+@app.get('/ai/{id}')
+def get_all_ai(id, db: Session = Depends(get_db)):
+    ai = db.query(models.AI).filter(models.AI.id == id).first()
+    return ai
+
+
+
+
+#requesting and saving files
 @app.post("/files/")
 async def create_files(files: List[bytes] = File(...)):
     return {"file_sizes": [len(file) for file in files]}
@@ -52,6 +71,7 @@ async def main():
 <input name="files" type="file" multiple>
 <input type="submit">
 </form>
+<a href="/docs">docs</a>
 </body>
     """
     return HTMLResponse(content=content)
