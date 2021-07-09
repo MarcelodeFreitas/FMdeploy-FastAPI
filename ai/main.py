@@ -33,28 +33,28 @@ def get_all_ai(db: Session = Depends(get_db)):
     return ai_list
 
 #get ai model by id
-@app.get('/ai/{id}', status_code = status.HTTP_200_OK, response_model=schemas.ShowAI)
-def get_all_ai(id, response: Response, db: Session = Depends(get_db)):
-    ai = db.query(models.AI).filter(models.AI.ai_id == id).first()
+@app.get('/ai/{ai_id}', status_code = status.HTTP_200_OK, response_model=schemas.ShowAI)
+def get_all_ai(ai_id, response: Response, db: Session = Depends(get_db)):
+    ai = db.query(models.AI).filter(models.AI.ai_id == ai_id).first()
     if not ai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"AI model with id number {id} was not found!")
+         detail=f"AI model with id number {ai_id} was not found!")
     return ai
 
-@app.delete('/ai/{id}', status_code = status.HTTP_200_OK)
-def delete(id, db: Session = Depends(get_db)):
-    ai = db.query(models.AI).filter(models.AI.ai_id == id)
+@app.delete('/ai/{ai_id}', status_code = status.HTTP_200_OK)
+def delete(ai_id, db: Session = Depends(get_db)):
+    ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
     if not ai.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {id} not found!")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
     ai.delete(synchronize_session=False)
     db.commit()
-    return 'done'
+    return HTTPException(status_code=status.HTTP_200_OK, detail=f"The AI model id {ai_id} was successfully deleted.")
 
-@app.put('/ai/{id}', status_code = status.HTTP_202_ACCEPTED)
-def update_title(id, request: schemas.UpdateAI, db: Session = Depends(get_db)):
-    ai = db.query(models.AI).filter(models.AI.ai_id == id)
+@app.put('/ai/{ai_id}', status_code = status.HTTP_202_ACCEPTED)
+def update_title(ai_id, request: schemas.UpdateAI, db: Session = Depends(get_db)):
+    ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
     if not ai.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {id} not found!")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
     ai.update(request.dict())
     db.commit()
     return ai.first()
@@ -71,7 +71,7 @@ async def create_script_file(model_id, file: UploadFile = File(...), db: Session
     if not ai.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {model_id} not found!")
     #check if model already has python script
-    if ai.first().python_script_path != None or ai.first().python_script_path != "":
+    if ai.first().python_script_path != None or ai.first().python_script_path != "" or ai.first().python_script_path != NULL:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {model_id} already has a python script!")
     #try to update ai data fields related to python script
     try:
@@ -92,34 +92,36 @@ async def create_script_file(model_id, file: UploadFile = File(...), db: Session
 
 #upload model files h5
 @app.post("/ai/files/modefiles")
-async def create_model_file(model_id, file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def create_model_file(ai_id, file: UploadFile = File(...), db: Session = Depends(get_db)):
     
     file_name = file.filename
-    file_path = "./modelfiles/" + model_id + "/" + file_name
+    file_path = "./modelfiles/" + ai_id + "/" + file_name
 
-    ai = db.query(models.AI).filter(models.AI.ai_id == model_id)
+    ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
     #check if provided model_id is valid
     if not ai.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {model_id} not found!")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
     #check if model already has model files
-    modelfiles = db.query(models.ModelFile).filter(models.AI.ai_id == model_id)
+    modelfiles = db.query(models.ModelFile).filter(models.AI.ai_id == ai_id)
+    i = ai.first().python_script_path
+    print(ai.first().python_script_path)
     if ai.first().python_script_path != None or ai.first().python_script_path != "":
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {model_id} already has a python script!")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {ai_id} already has a python script!")
     #try to update ai data fields related to python script
     try:
         ai.update({"python_script_name": file_name, "python_script_path": file_path })
         db.commit()
     except:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {model_id} database update error!")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {ai_id} database update error!")
     #try to write python script top filesystem
     try:
-        os.makedirs("./modelfiles/" + model_id, exist_ok=True)
+        os.makedirs("./modelfiles/" + ai_id, exist_ok=True)
         with open(f"{file_path}", "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)  
     except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {file_name} filesystem write error!")
 
-    return HTTPException(status_code=status.HTTP_200_OK, detail=f"The file named {file_name} was successfully submited to model id number {model_id}.")
+    return HTTPException(status_code=status.HTTP_200_OK, detail=f"The file named {file_name} was successfully submited to model id number {ai_id}.")
 
 
 
