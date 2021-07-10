@@ -42,8 +42,6 @@ class CreateAI(BaseModel):
 class CreatedAI(BaseModel):
     ai_id: str
 
-    class Config():
-        orm_mode = True
 
 class UpdateAI(BaseModel):
     title: str

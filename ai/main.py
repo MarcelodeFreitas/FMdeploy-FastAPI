@@ -10,6 +10,8 @@ import os
 from .routers import user, ai
 from datetime import datetime
 import json
+import importlib
+import sys
 
 
 app = FastAPI()
@@ -29,6 +31,12 @@ models.Base.metadata.create_all(engine)
 
 app.include_router(user.router)
 app.include_router(ai.router)
+
+@app.get("/test")
+async def test():
+    sys.path.append('./modelfiles/app')
+    script =  importlib.import_module("script")
+    await script.hello()
 
 @app.get("/")
 async def main():
