@@ -112,11 +112,19 @@ def get_all_public_ai(db: Session = Depends(get_db)):
 
 #get public ai models by id
 @app.get('/ai/public/{ai_id}', status_code = status.HTTP_200_OK, response_model=schemas.ShowAI)
-def get_all_public_ai(ai_id, db: Session = Depends(get_db)):
+def get_all_public_ai_by_id(ai_id, db: Session = Depends(get_db)):
     ai =  db.query(models.AI).where(models.AI.is_private.is_(False)).filter(models.AI.ai_id == ai_id).first()
     if not ai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"AI model with id number {ai_id} was not found in Public AIs!")
+    return ai
+
+#get oublic ai model by title
+@app.get('/ai/public/title/{title}', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
+def get_public_ai_by_title(title, db: Session = Depends(get_db)):
+    ai = db.query(models.AI).where(models.AI.is_private.is_(False)).filter(models.AI.title.like(f"%{title}%")).all()
+    if not ai:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with title: {title} was not found!")
     return ai
 
 #get ai model by id
@@ -126,6 +134,14 @@ def get_ai_by_id(ai_id, response: Response, db: Session = Depends(get_db)):
     if not ai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"AI model with id number {ai_id} was not found!")
+    return ai
+
+#get ai model by title
+@app.get('/ai/title/{title}', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
+def get_ai_by_title(title, db: Session = Depends(get_db)):
+    ai = db.query(models.AI).filter(models.AI.title.like(f"%{title}%")).all()
+    if not ai:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with title: {title} was not found!")
     return ai
 
 @app.delete('/ai/{ai_id}', status_code = status.HTTP_200_OK)
