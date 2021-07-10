@@ -19,15 +19,15 @@ app = FastAPI()
 models.Base.metadata.create_all(engine)
 
 #save documentation
-@app.on_event("startup")
-def save_openapi_json():
-    openapi_data = app.openapi()
-    # Change "openapi.json" to desired filename
-    with open("openapi.json", "w") as file:
-        json.dump(openapi_data, file)
+# @app.on_event("startup")
+# def save_openapi_json():
+#     openapi_data = app.openapi()
+#     # Change "openapi.json" to desired filename
+#     with open("openapi.json", "w") as file:
+#         json.dump(openapi_data, file)
 
 #create user
-@app.post('/user', status_code = status.HTTP_201_CREATED)
+@app.post('/user', status_code = status.HTTP_201_CREATED, response_model=schemas.ShowUser)
 def create_user(request: schemas.User, db: Session = Depends(get_db)):
     new_user = models.User(name=request.name, email=request.email, password=request.password)
     try: 
@@ -44,7 +44,7 @@ def get_all_users(db: Session = Depends(get_db)):
     user_list = db.query(models.User).all()
     return user_list
 
-#get ai model by id
+#get user model by id
 @app.get('/user/{user_id}', status_code = status.HTTP_200_OK, response_model=schemas.ShowUser)
 def get_user_by_id(user_id, response: Response, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.user_id == user_id).first()
@@ -63,7 +63,8 @@ def delete_user(user_id, db: Session = Depends(get_db)):
     db.commit()
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"User id {user_id} was successfully deleted.")
 
-@app.put('/user/{user_id}', status_code = status.HTTP_202_ACCEPTED)
+#update user by id
+@app.put('/user/{user_id}', status_code = status.HTTP_202_ACCEPTED, response_model=schemas.ShowUser)
 def update_user_by_id(user_id, request: schemas.UpdateUser, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.user_id == user_id)
     if not user.first():
@@ -75,8 +76,9 @@ def update_user_by_id(user_id, request: schemas.UpdateUser, db: Session = Depend
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Email is already registered!")
     return user.first()
 
+#AI
 #create ai model
-@app.post('/ai', status_code = status.HTTP_201_CREATED)
+@app.post('/ai', status_code = status.HTTP_201_CREATED, response_model=schemas.ShowAI)
 def create_ai(request: schemas.CreateAI, db: Session = Depends(get_db)):
     new_ai = models.AI(title=request.title, description=request.description, output_type=request.output_type,is_private=request.is_private, timestamp=request.timestamp)
     db.add(new_ai)
@@ -91,7 +93,7 @@ def get_all_ai(db: Session = Depends(get_db)):
     return ai_list
 
 #get all ai models
-@app.get('/privacy', status_code = status.HTTP_200_OK, response_model=List[schemas.AI])
+@app.get('/ai/public', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
 def get_all_public_ai(db: Session = Depends(get_db)):
     ai_list =  db.query(models.AI).where(models.AI.is_private.is_(False)).all()
     for i in ai_list:
@@ -210,16 +212,50 @@ async def create_model_file(ai_id, files: List[UploadFile] = File(...), db: Sess
 @app.get("/")
 async def main():
     content = """
-<body>
-<form action="/ai/files/pythonscript" enctype="multipart/form-data" method="post">
-<input name="files" type="file" multiple>
-<input type="submit">
-</form>
-<form action="/uploadfiles/" enctype="multipart/form-data" method="post">
-<input name="files" type="file" multiple>
-<input type="submit">
-</form>
-<a href="/docs">docs</a>
+<body style="margin-top: 200px; background-color: #33363B; font-family: sans-serif;">
+<center>
+<h1 style="color: #2ABF9F">Welcome to FMdeploy API</h1>
+<p style="color:white;">Developed with <a href="https://fastapi.tiangolo.com/" target="_blank" style="color: #2ABF9F">Fast API</a>. To check the documentation please use one of the links bellow:</p>
+<a style = 
+    "background-color: #2ABF9F;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer; 
+    margin: 30px 30px;
+    font-weight: bold;"
+    href="/docs" target="_blank">
+    Docs Swagger UI
+</a>
+<a style = 
+    "background-color: #2ABF9F;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 30px 30px; 
+    font-weight: bold;"
+    href="/redoc" target="_blank">
+    Docs ReDoc
+</a>
+</center>
 </body>
     """
     return HTMLResponse(content=content)
+
+# <form action="/ai/files/pythonscript" enctype="multipart/form-data" method="post">
+# <input name="files" type="file" multiple>
+# <input type="submit">
+# </form>
+# <form action="/uploadfiles/" enctype="multipart/form-data" method="post">
+# <input name="files" type="file" multiple>
+# <input type="submit">
+# </form>

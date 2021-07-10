@@ -16,6 +16,19 @@ class AI(BaseModel):
     class Config():
         orm_mode = True
 
+
+class ShowAI(BaseModel):
+    ai_id: int
+    title: str
+    description: Optional[str] = None
+    output_type: str
+    is_private: bool
+    timestamp: datetime 
+    last_updated: Optional[datetime] = None
+
+    class Config():
+        orm_mode = True
+
 class CreateAI(BaseModel):
     title: str
     description: Optional[str]
@@ -32,20 +45,6 @@ class UpdateAI(BaseModel):
     output_type: str
     is_private: bool
     last_updated: datetime
-
-    class Config():
-        orm_mode = True
-
-class ShowAI(BaseModel):
-    ai_id: int
-    title: str
-    description: Optional[str] = None
-    output_type: str
-    is_private: bool
-    python_script_name: Optional[str] = None
-    python_script_path: Optional[str] = None
-    timestamp: datetime 
-    last_updated: Optional[datetime] = None
 
     class Config():
         orm_mode = True
