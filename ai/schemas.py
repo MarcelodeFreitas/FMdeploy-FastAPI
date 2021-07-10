@@ -63,6 +63,14 @@ class ShowUser(BaseModel):
     class Config():
         orm_mode = True
 
+class CreateUser(BaseModel):
+    name: str
+    email: str
+    password: str
+
+    class Config():
+        orm_mode = True
+
 class UpdateUser(BaseModel):
     name: str
     email: str

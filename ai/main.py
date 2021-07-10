@@ -28,7 +28,7 @@ models.Base.metadata.create_all(engine)
 
 #create user
 @app.post('/user', status_code = status.HTTP_201_CREATED, response_model=schemas.ShowUser)
-def create_user(request: schemas.User, db: Session = Depends(get_db)):
+def create_user(request: schemas.CreateUser, db: Session = Depends(get_db)):
     new_user = models.User(name=request.name, email=request.email, password=request.password)
     try: 
         db.add(new_user)
@@ -53,6 +53,15 @@ def get_user_by_id(user_id, response: Response, db: Session = Depends(get_db)):
          detail=f"User with id number {user_id} was not found!")
     return user
 
+#get user model by email
+@app.get('/user/email/{user_email}', status_code = status.HTTP_200_OK, response_model=schemas.ShowUser)
+def get_user_by_email(user_email, response: Response, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == user_email).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"User with  {user_email} was not found!")
+    return user
+
 #delete user by id
 @app.delete('/user/{user_id}', status_code = status.HTTP_200_OK)
 def delete_user(user_id, db: Session = Depends(get_db)):
@@ -69,6 +78,8 @@ def update_user_by_id(user_id, request: schemas.UpdateUser, db: Session = Depend
     user = db.query(models.User).filter(models.User.user_id == user_id)
     if not user.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id {user_id} not found!")
+    if user.first().name == "" or user.first().name == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id {user_id} name can't be empty string or None!")
     try:
         user.update(request.dict())
         db.commit()
@@ -86,21 +97,27 @@ def create_ai(request: schemas.CreateAI, db: Session = Depends(get_db)):
     db.refresh(new_ai)
     return new_ai
 
-#get all public ai models
+#get all ai models
 @app.get('/ai', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
 def get_all_ai(db: Session = Depends(get_db)):
     ai_list = db.query(models.AI).all()
     return ai_list
 
-#get all ai models
+
+#get all public ai models
 @app.get('/ai/public', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
 def get_all_public_ai(db: Session = Depends(get_db)):
     ai_list =  db.query(models.AI).where(models.AI.is_private.is_(False)).all()
-    for i in ai_list:
-        if i.is_private == False:
-            print(i.is_private)
-            print(type(i.is_private))
     return ai_list
+
+#get public ai models by id
+@app.get('/ai/public/{ai_id}', status_code = status.HTTP_200_OK, response_model=schemas.ShowAI)
+def get_all_public_ai(ai_id, db: Session = Depends(get_db)):
+    ai =  db.query(models.AI).where(models.AI.is_private.is_(False)).filter(models.AI.ai_id == ai_id).first()
+    if not ai:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} was not found in Public AIs!")
+    return ai
 
 #get ai model by id
 @app.get('/ai/{ai_id}', status_code = status.HTTP_200_OK, response_model=schemas.ShowAI)
@@ -120,7 +137,7 @@ def delete_ai(ai_id, db: Session = Depends(get_db)):
     db.commit()
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"The AI model id {ai_id} was successfully deleted.")
 
-@app.put('/ai/{ai_id}', status_code = status.HTTP_202_ACCEPTED)
+@app.put('/ai/{ai_id}', status_code = status.HTTP_202_ACCEPTED, response_model=schemas.ShowAI)
 def update_ai_by_id(ai_id, request: schemas.UpdateAI, db: Session = Depends(get_db)):
     ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
     if not ai.first():
@@ -186,7 +203,7 @@ async def create_model_file(ai_id, files: List[UploadFile] = File(...), db: Sess
         except:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {file_name} filesystem write error!")
 
-    return HTTPException(status_code=status.HTTP_200_OK, detail=f"The file named {file_name} was successfully submited to model id number {ai_id}.")
+    return HTTPException(status_code=status.HTTP_200_OK, detail=f"Files successfully submited to model id number {ai_id}.")
 
 
 
