@@ -13,6 +13,12 @@ router = APIRouter(
 )
 
 #AI
+
+#run a model by id
+@router.get('/run', status_code = status.HTTP_202_ACCEPTED)
+async def run_ai(request: schemas.RunAI, db: Session = Depends(get_db)):
+    await ai.run_ai(request.user_id, request.ai_id, db)
+
 #create ai model
 @router.post('/', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)
 def create_ai(request: schemas.CreateAI, db: Session = Depends(get_db)):

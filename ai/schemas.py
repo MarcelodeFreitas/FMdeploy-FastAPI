@@ -59,6 +59,9 @@ class User(BaseModel):
     email: str
     password: str
 
+    class Config():
+        orm_mode = True
+
 class ShowUser(BaseModel):
     user_id: str
     name: str
@@ -81,3 +84,11 @@ class UpdateUser(BaseModel):
 
     class Config():
         orm_mode = True
+
+class RunAI(BaseModel):
+    user_id: int
+    ai_id: str
+
+    class Config():
+        orm_mode = True
+    

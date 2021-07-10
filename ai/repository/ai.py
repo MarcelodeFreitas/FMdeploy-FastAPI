@@ -3,8 +3,10 @@ from sqlalchemy.orm import Session
 from .. import schemas, models
 from . import user
 import uuid
+import importlib
+import sys
 
-print(str(uuid.uuid4()))
+print(str(uuid.uuid4()).replace("-", ""))
 
 def get_all(db: Session):
     ai_list = db.query(models.AI).all()
@@ -25,7 +27,7 @@ def create_ai_user_list_entry(user_id: str, ai_id: int, db: Session):
     return new_ai_user_list
 
 def create_ai(request: schemas.CreateAI, db: Session):
-    ai_id = str(uuid.uuid4())
+    ai_id = str(uuid.uuid4()).replace("-", "")
     user.get_user_by_id(request.user_id, db)
     create_ai_entry(ai_id, request, db)
     create_ai_user_list_entry(request.user_id, ai_id, db)
@@ -37,5 +39,12 @@ def get_ai_by_id(ai_id: str, db: Session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"AI model with id number {ai_id} was not found!")
     return ai
+
+async def run_ai(user_id: int, ai_id: str, db: Session):
+    user.get_user_by_id(user_id, db)
+    
+    path = models.UserAIList
+    sys.path.append('./modelfiles/app')
+    script =  importlib.import_module("script")
 
 
