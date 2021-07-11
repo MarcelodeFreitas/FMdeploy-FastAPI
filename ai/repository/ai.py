@@ -68,7 +68,7 @@ async def run_ai(user_id: int, ai_id: str, db: Session):
     check_python_files(ai_id, db)
     #check if the table modelfile has files associated with this ai model
     #check if those files exist in the file system
-
+    files.check_model_files(ai_id, db)
     # run the ai model
     # path = models.UserAIList
     # sys.path.append('./modelfiles/app')
