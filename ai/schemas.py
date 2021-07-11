@@ -91,4 +91,29 @@ class RunAI(BaseModel):
 
     class Config():
         orm_mode = True
+
+class UserAIList(BaseModel):
+    user_ai_list_id: int
+    fk_user_id: int
+    fk_ai_id: str
+    owner: bool
     
+    class Config():
+        orm_mode = True
+
+class Owner(BaseModel):
+    owner: bool
+    
+    class Config():
+        orm_mode = True
+
+class ModelFile(BaseModel):
+    model_file_id: int
+    fk_ai_id: str
+    name: Optional[str] = None
+    path: Optional[str] = None
+
+    class Config():
+        orm_mode = True
+
+

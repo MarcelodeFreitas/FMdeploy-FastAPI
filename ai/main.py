@@ -7,7 +7,7 @@ from .database import get_db
 from typing import List
 import shutil
 import os
-from .routers import user, ai
+from .routers import user, ai, userai
 from datetime import datetime
 import json
 import importlib
@@ -31,6 +31,7 @@ models.Base.metadata.create_all(engine)
 
 app.include_router(user.router)
 app.include_router(ai.router)
+app.include_router(userai.router)
 
 @app.get("/test")
 async def test():

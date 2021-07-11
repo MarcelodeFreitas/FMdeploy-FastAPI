@@ -3,7 +3,7 @@ from .. import schemas, models
 from ..database import get_db
 from typing import List
 from sqlalchemy.orm import Session
-from ..repository import ai, user
+from ..repository import ai, user, files
 import shutil
 import os
 
@@ -14,10 +14,23 @@ router = APIRouter(
 
 #AI
 
+@router.post("/test", status_code = status.HTTP_200_OK)
+def test(request: schemas.RunAI, db: Session = Depends(get_db)):
+    return files.check_model_files(request.ai_id, db)
+
+
+    
+@router.get("/test2", status_code = status.HTTP_200_OK)
+async def test():
+    file_exists = os.path.isfile("./modelfiles/69b743c6b88d415cb56fa917373a55fd/Generate_OB_masks_modules.py")
+    directory = os.path.isdir("./modelfiles")
+    return {"file_exists": file_exists, "directory": directory}
+
+
 #run a model by id
-@router.get('/run', status_code = status.HTTP_202_ACCEPTED)
+@router.post('/run', status_code = status.HTTP_202_ACCEPTED)
 async def run_ai(request: schemas.RunAI, db: Session = Depends(get_db)):
-    await ai.run_ai(request.user_id, request.ai_id, db)
+    return await ai.run_ai(request.user_id, request.ai_id, db)
 
 #create ai model
 @router.post('/', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)
