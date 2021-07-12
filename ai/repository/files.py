@@ -56,3 +56,9 @@ def check_input_file(input_file_id: str, db: Session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
         detail=f"Input file with id number: {input_file_id}, path: {input_file.path}, does not exist in the filesystem !")
     return inputfile_name_path
+
+def delete_python_script():
+    pass
+
+def delete_model_files():
+    pass

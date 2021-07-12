@@ -81,14 +81,15 @@ def get_ai_by_title(title, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with title: {title} was not found!")
     return ai
 
-@router.delete('/{ai_id}', status_code = status.HTTP_200_OK)
+@router.delete('/{user_id}/{ai_id}', status_code = status.HTTP_200_OK)
 def delete_ai(ai_id, db: Session = Depends(get_db)):
-    ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
-    if not ai.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
-    ai.delete(synchronize_session=False)
-    db.commit()
-    return HTTPException(status_code=status.HTTP_200_OK, detail=f"The AI model id {ai_id} was successfully deleted.")
+    pass
+    # ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
+    # if not ai.first():
+    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
+    # ai.delete(synchronize_session=False)
+    # db.commit()
+    # return HTTPException(status_code=status.HTTP_200_OK, detail=f"The AI model id {ai_id} was successfully deleted.")
 
 @router.put('/{ai_id}', status_code = status.HTTP_202_ACCEPTED, response_model=schemas.ShowAI)
 def update_ai_by_id(ai_id, request: schemas.UpdateAI, db: Session = Depends(get_db)):

@@ -115,4 +115,20 @@ def run_script( ai_id: str, python_file: dict, model_files: dict, input_file: di
 
     return script.run(input_file_path, output_file_name, output_directory_path)
 
+def delete(user_id: int, ai_id: str, db: Session):
+    #check if the user exists
+    user.get_user_by_id(user_id, db)
+    #check if the ai exists
+    get_ai_by_id(ai_id, db)
+    #check if the user is the owner
+    is_owner = userai.check_owner(user_id, ai_id, db)
+    if not is_owner:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+         detail=f"AI model with id number {ai_id} has no file directory!")
+    #delete ai folder from filesystem
+
+    #delete ai from database
+
+    pass
+
 

@@ -117,4 +117,11 @@ class ModelFile(BaseModel):
     class Config():
         orm_mode = True
 
+class UserAI(BaseModel):
+    user_id: int
+    ai_id: str
+
+    class Config():
+        orm_mode = True
+
 
