@@ -1,8 +1,9 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from .. import schemas, models
 from . import user, userai, files
 import uuid
+from typing import List
 import importlib
 import sys
 import os
@@ -55,28 +56,31 @@ def check_public_by_id(ai_id: str, db: Session):
         return False
     return True
 
-async def run_ai(user_id: int, ai_id: str, db: Session):
+async def run_ai(user_id: int, ai_id: str, input_file_id: str, db: Session):
     #check if the user id provided exists
     user.get_user_by_id(user_id, db)
+    #check if the ai id provided exists
+    get_ai_by_id(ai_id, db)
     #check if the ai model is public
     if not check_public_by_id(ai_id, db):
         #check if the user has access to this ai model
         #by checking the userailist table
         userai.check_access_ai_exception(user_id, ai_id, db)
+    #check if input file exists
+    input_file = files.check_input_file(input_file_id, db)
     #check if the ai table has python script paths
     #check that the python script files exist in the filesystem
-    check_python_files(ai_id, db)
+    python_file = check_python_files(ai_id, db)
     #check if the table modelfile has files associated with this ai model
     #check if those files exist in the file system
-    files.check_model_files(ai_id, db)
+    model_files = files.check_model_files(ai_id, db)
     # run the ai model
-    # path = models.UserAIList
-    # sys.path.append('./modelfiles/app')
-    # script =  importlib.import_module("script")
+    run_script(ai_id, python_file, model_files, input_file)
     return "hey"
 
-def check_python_files(ai_id: str, db):
+def check_python_files(ai_id: str, db: Session):
     ai = db.query(models.AI).filter(models.AI.ai_id == ai_id).first()
+    name_path = db.query(models.AI).filter(models.AI.ai_id == ai_id).with_entities(models.AI.python_script_name, models.AI.python_script_path).first()
     if not ai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"AI model with id number {ai_id} was not found!")
@@ -84,9 +88,31 @@ def check_python_files(ai_id: str, db):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"AI model with id number {ai_id} does not have a python script!")
     file_exists = os.path.isfile(ai.python_script_path)
-    return file_exists
+    return name_path
 
-def run():
-    pass
+def run_script( ai_id: str, python_file: dict, model_files: dict, input_file: dict):
+    python_script_name = python_file.python_script_name[0:-3]
+    input_file_name = input_file.name
+    input_file_path = input_file.path
+    # make output directory
+    os.makedirs("./outputfiles/" + ai_id, exist_ok=True)
+
+    output_directory_path = "./outputfiles/"
+    output_file_name = "result_" + input_file_name
+    path = "./modelfiles/" + ai_id
+
+    #python_script_name = db.query(models.AI).where(models.AI.ai_id == ai_id).first().python_script_name[0:-3]
+    is_directory = os.path.isdir(path)
+    if not is_directory:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} has no file directory!")
+    # add folder path to sys
+    sys.path.append(path)
+    # import the module
+    script = importlib.import_module(python_script_name)
+    # run "load_models" and "run"
+    script.load_models(model_files)
+
+    return script.run(input_file_path, output_file_name, output_directory_path)
 
 

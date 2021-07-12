@@ -88,6 +88,7 @@ class UpdateUser(BaseModel):
 class RunAI(BaseModel):
     user_id: int
     ai_id: str
+    input_file_id: str
 
     class Config():
         orm_mode = True

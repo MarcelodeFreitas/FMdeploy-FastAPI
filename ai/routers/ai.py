@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from ..repository import ai, user, files
 import shutil
 import os
+import importlib
+import sys
 
 router = APIRouter(
     prefix="/ai",
@@ -14,23 +16,20 @@ router = APIRouter(
 
 #AI
 
-@router.post("/test", status_code = status.HTTP_200_OK)
-def test(request: schemas.RunAI, db: Session = Depends(get_db)):
-    return files.check_model_files(request.ai_id, db)
-
-
-    
-@router.get("/test2", status_code = status.HTTP_200_OK)
-async def test():
-    file_exists = os.path.isfile("./modelfiles/69b743c6b88d415cb56fa917373a55fd/Generate_OB_masks_modules.py")
-    directory = os.path.isdir("./modelfiles")
-    return {"file_exists": file_exists, "directory": directory}
-
+@router.get("/test", status_code = status.HTTP_200_OK)
+def test(db: Session = Depends(get_db)):
+    path = "./modelfiles/69b743c6b88d415cb56fa917373a55fd/Generate_OB_masks_module.py"
+    name = "Generate_OB_masks_module"
+    file_exists = os.path.isfile(path)
+    directory = os.path.isdir("./modelfiles/69b743c6b88d415cb56fa917373a55fd")
+    sys.path.append('./modelfiles/69b743c6b88d415cb56fa917373a55fd')
+    script = importlib.import_module(name)
+    return {"file_exists": name[0:-3], "directory": directory, "hey": script.hello()}
 
 #run a model by id
 @router.post('/run', status_code = status.HTTP_202_ACCEPTED)
 async def run_ai(request: schemas.RunAI, db: Session = Depends(get_db)):
-    return await ai.run_ai(request.user_id, request.ai_id, db)
+    return await ai.run_ai(request.user_id, request.ai_id, request.input_file_id, db)
 
 #create ai model
 @router.post('/', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)
@@ -100,6 +99,11 @@ def update_ai_by_id(ai_id, request: schemas.UpdateAI, db: Session = Depends(get_
     db.commit()
     return ai.first()
 
+#upload input file
+@router.post("/files/inputfile", status_code = status.HTTP_200_OK)
+def create_input_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    return files.create_input_file(db, file)
+
 #upload python script
 @router.post("/files/pythonscript")
 async def create_script_file(model_id, file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -130,8 +134,7 @@ async def create_script_file(model_id, file: UploadFile = File(...), db: Session
 
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"The file named {file_name} was successfully submited to model id number {model_id}.")
 
-
-#upload model files h5
+#upload model files 
 @router.post("/files/modelfiles")
 async def create_model_file(ai_id, files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
     for file in files:
@@ -158,3 +161,18 @@ async def create_model_file(ai_id, files: List[UploadFile] = File(...), db: Sess
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {file_name} filesystem write error!")
 
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"Files successfully submited to model id number {ai_id}.")
+
+#get model files name and path stored for a specific ai model
+@router.post("/files/check_model_files/{ai_id}", status_code = status.HTTP_200_OK)
+def check_model_files_by_id(ai_id, db: Session = Depends(get_db)):
+    return files.check_model_files(ai_id, db)
+
+#get input file name and path stored by id
+@router.post("/files/check_input_file/{input_file_id}", status_code = status.HTTP_200_OK)
+def check_input_file_by_id(input_file_id, db: Session = Depends(get_db)):
+    return files.check_input_file(input_file_id, db)
+
+#get python file by id
+@router.post("/files/check_python_file/{ai_id}", status_code = status.HTTP_200_OK)
+def check_python_file_by_id(ai_id, db: Session = Depends(get_db)):
+    return ai.check_python_files(ai_id, db)

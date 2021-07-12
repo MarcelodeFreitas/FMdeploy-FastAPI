@@ -40,3 +40,10 @@ class ModelFile(Base):
     fk_ai_id = Column(String, ForeignKey('ai.ai_id'))
     name = Column(String, nullable=False)
     path = Column(String, nullable=False)
+
+
+class InputFile(Base):
+    __tablename__ = 'inputfile'
+    input_file_id = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    path = Column(String, nullable=False)
