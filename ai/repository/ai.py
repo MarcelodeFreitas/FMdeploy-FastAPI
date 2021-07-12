@@ -7,6 +7,7 @@ from typing import List
 import importlib
 import sys
 import os
+import shutil
 
 print(str(uuid.uuid4()).replace("-", ""))
 
@@ -97,7 +98,7 @@ def run_script( ai_id: str, python_file: dict, model_files: dict, input_file: di
     # make output directory
     os.makedirs("./outputfiles/" + ai_id, exist_ok=True)
 
-    output_directory_path = "./outputfiles/"
+    output_directory_path = "./outputfiles/" + ai_id
     output_file_name = "result_" + input_file_name
     path = "./modelfiles/" + ai_id
 
@@ -124,11 +125,29 @@ def delete(user_id: int, ai_id: str, db: Session):
     is_owner = userai.check_owner(user_id, ai_id, db)
     if not is_owner:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-         detail=f"AI model with id number {ai_id} has no file directory!")
+         detail=f"User with id: {user_id} is not the owner of the AI model id: {ai_id}!")
     #delete ai folder from filesystem
-
+    path = "./modelfiles/" + ai_id
+    if not os.path.isdir(path):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} has no file directory!")
+    try:
+        shutil.rmtree(path)
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} has no directory in the filesystem!")
     #delete ai from database
-
-    pass
-
-
+    ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
+    if not ai.first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
+    try:
+        ai.delete(synchronize_session=False)
+        db.commit()
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} error deleting from database!")
+    #delete from UserAI List
+    userai.delete(user_id, ai_id, db)
+    #deleter from ModelFile table
+    files.delete_model_files(ai_id, db)
+    return HTTPException(status_code=status.HTTP_200_OK, detail=f"The AI model id {ai_id} was successfully deleted.")

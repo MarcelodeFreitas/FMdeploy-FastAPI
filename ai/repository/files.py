@@ -20,6 +20,19 @@ def check_model_files(ai_id: str, db: Session):
             detail=f"AI model with id number: {ai_id}, path: {modelfile.path}, does not exist in the filesystem !")
     return modelfiles_name_path
 
+def delete_model_files(ai_id: str, db: Session):
+    modelfiles = db.query(models.ModelFile).where(models.ModelFile.fk_ai_id == ai_id).all()
+    if not modelfiles:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} has no model files in database!")
+    try:
+        modelfiles.delete(synchronize_session=False)
+        db.commit()
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} error deleting from database!")
+    return True
+
 def create_input_file(db: Session, file: UploadFile = File(...)):
     input_file_id = str(uuid.uuid4()).replace("-", "")
     file_name = file.filename
