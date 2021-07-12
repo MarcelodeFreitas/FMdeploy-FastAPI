@@ -21,7 +21,7 @@ app = FastAPI()
 #if not, the table is created
 models.Base.metadata.create_all(engine)
 
-#save documentation
+# # save documentation
 # @app.on_event("startup")
 # def save_openapi_json():
 #     openapi_data = app.openapi()
@@ -57,7 +57,8 @@ async def main():
     font-size: 16px;
     cursor: pointer; 
     margin: 30px 30px;
-    font-weight: bold;"
+    font-weight: bold;
+    border-radius: 5px"
     href="/docs" target="_blank">
     Docs Swagger UI
 </a>
@@ -72,7 +73,8 @@ async def main():
     font-size: 16px;
     cursor: pointer;
     margin: 30px 30px; 
-    font-weight: bold;"
+    font-weight: bold;
+    border-radius: 5px"
     href="/redoc" target="_blank">
     Docs ReDoc
 </a>
