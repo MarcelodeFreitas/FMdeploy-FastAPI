@@ -44,7 +44,7 @@ async def main():
         <div style="display: flex;">
             <div style="flex: 50%;
             height: 95vh;">
-                <div style="margin-bottom: 60px; margin-top: 300px">
+                <div style="margin-bottom: 60px; margin-top: 300px; margin-right: 50px">
                     <h1 style="color: #2ABF9F; margin-bottom: 60px; font-size: 49">Welcome to FMdeploy API !</h1>
                     <p style="color:white;">Developed with <a href="https://fastapi.tiangolo.com/" target="_blank" style="color: #2ABF9F">Fast API</a>. To check the documentation please use one of the links bellow:</p>
                 </div>
@@ -77,6 +77,7 @@ async def main():
                     font-size: 16px;
                     cursor: pointer;
                     margin-top: 30px;
+                    margin-right: 100px;
                     font-weight: bold;
                     border-radius: 5px;
                     width: 200px"
@@ -88,7 +89,7 @@ async def main():
             height: 98vh;
             background-color: #2ABF9F">
                 <center style="margin-top: 300px">
-                    <img src="static/logo.png"/>
+                    <img src="static/logo.png" style="margin: 50px">
                     <p style="color: white; font-size: 45; text-align: center; font-weight: bold">
                         FMdeploy
                     </p>

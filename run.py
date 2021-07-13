@@ -6,7 +6,8 @@ if __name__ == '__main__':
     os.makedirs("outputfiles", exist_ok=True)
     os.system('uvicorn ai.main:app --reload')
     #how to choose host and port
-    #os.system('uvicorn ai.main:app --reload --host 0.0.0.0 --port 8000 )
+    #os.system('uvicorn ai.main:app --reload --host 0.0.0.0 --port 8000 ')
     #for production
-    #gunicorn -k uvicorn.workers.UvicornWorker
+    #os.system('gunicorn -k uvicorn.workers.UvicornWorker --host 0.0.0.0 --port 8000 ')
+    # os.system('gunicorn -w 4 -k uvicorn.workers.UvicornH11Worker')
     pass
