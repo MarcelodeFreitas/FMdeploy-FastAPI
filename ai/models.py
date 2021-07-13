@@ -19,6 +19,7 @@ class UserAIList(Base):
     fk_user_id = Column(Integer, ForeignKey('user.user_id'), nullable=False)
     fk_ai_id = Column(String, ForeignKey('ai.ai_id'), nullable=False)
     owner =  Column(Boolean, default=False, nullable=False)
+    beneficiary =  Column(Boolean, default=False, nullable=False)
     
 class AI(Base):
     __tablename__ = 'ai'

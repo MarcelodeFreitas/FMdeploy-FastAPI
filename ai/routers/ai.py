@@ -16,16 +16,6 @@ router = APIRouter(
 
 #AI
 
-@router.get("/test", status_code = status.HTTP_200_OK)
-def test(db: Session = Depends(get_db)):
-    path = "./modelfiles/69b743c6b88d415cb56fa917373a55fd/Generate_OB_masks_module.py"
-    name = "Generate_OB_masks_module"
-    file_exists = os.path.isfile(path)
-    directory = os.path.isdir("./modelfiles/69b743c6b88d415cb56fa917373a55fd")
-    sys.path.append('./modelfiles/69b743c6b88d415cb56fa917373a55fd')
-    script = importlib.import_module(name)
-    return {"file_exists": name[0:-3], "directory": directory, "hey": script.hello()}
-
 #create ai model
 @router.post('/', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)
 def create_ai(request: schemas.CreateAI, db: Session = Depends(get_db)):
@@ -76,6 +66,7 @@ def get_ai_by_title(title, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with title: {title} was not found!")
     return ai
 
+#delete ai model from database tables and filesystem
 @router.delete('/', status_code = status.HTTP_200_OK)
 def delete_ai(request: schemas.UserAI, db: Session = Depends(get_db)):
     return ai.delete(request.user_id, request.ai_id, db)
