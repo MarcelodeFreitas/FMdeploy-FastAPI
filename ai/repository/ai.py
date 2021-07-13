@@ -27,7 +27,7 @@ def create_ai_entry(ai_id: str, request: schemas.CreateAI, db: Session):
     return new_ai
 
 def create_ai_user_list_entry(user_id: str, ai_id: int, db: Session):
-    new_ai_user_list = models.UserAIList(fk_user_id=user_id, fk_ai_id=ai_id,owner=True)
+    new_ai_user_list = models.UserAIList(fk_user_id=user_id, fk_ai_id=ai_id,owner=True, beneficiary=False)
     try:
         db.add(new_ai_user_list)
         db.commit()
