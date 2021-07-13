@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from .. import schemas, models
 from . import user, userai, files
@@ -69,7 +70,6 @@ async def run_ai(user_id: int, ai_id: str, input_file_id: str, db: Session):
         userai.check_access_ai_exception(user_id, ai_id, db)
     #check if input file exists
     input_file = files.check_input_file(input_file_id, db)
-    print(input_file)
     #check if the ai table has python script paths
     #check that the python script files exist in the filesystem
     python_file = check_python_files(ai_id, db)
@@ -77,8 +77,13 @@ async def run_ai(user_id: int, ai_id: str, input_file_id: str, db: Session):
     #check if those files exist in the file system
     model_files = files.check_model_files(ai_id, db)
     # run the ai model
-    run_script(ai_id, python_file, model_files, input_file)
-    return "hey"
+    output_file_path = run_script(ai_id, python_file, model_files, input_file)
+    #check if result file exists
+    if not os.path.isfile(output_file_path):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"There is no output file at: {output_file_path}!")
+    
+    return FileResponse(output_file_path, media_type="application/gzip", filename="result_" + input_file.name)
 
 def check_python_files(ai_id: str, db: Session):
     ai = db.query(models.AI).filter(models.AI.ai_id == ai_id).first()
@@ -114,8 +119,10 @@ def run_script( ai_id: str, python_file: dict, model_files: dict, input_file: di
     script = importlib.import_module(python_script_name)
     # run "load_models" and "run"
     script.load_models(model_files)
+    script.run(input_file_path, output_file_name, output_directory_path)
 
-    return script.run(input_file_path, output_file_name, output_directory_path)
+    return output_directory_path + output_file_name
+
 
 def delete(user_id: int, ai_id: str, db: Session):
     #check if the user exists

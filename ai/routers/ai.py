@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
+from fastapi.responses import FileResponse
 from .. import schemas, models
 from ..database import get_db
 from typing import List
