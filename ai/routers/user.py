@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from .. import schemas, models
+from .. import schemas, models, hashing, oauth2
 from ..database import get_db
 from typing import List
 from sqlalchemy.orm import Session
@@ -12,7 +12,7 @@ router = APIRouter(
 #create user
 @router.post('/', status_code = status.HTTP_201_CREATED, response_model=schemas.ShowUser)
 def create_user(request: schemas.CreateUser, db: Session = Depends(get_db)):
-    new_user = models.User(name=request.name, email=request.email, password=request.password)
+    new_user = models.User(name=request.name, email=request.email, password=hashing.Hash.bcrypt(request.password))
     try: 
         db.add(new_user)
         db.commit()
@@ -23,13 +23,13 @@ def create_user(request: schemas.CreateUser, db: Session = Depends(get_db)):
 
 #get all users
 @router.get('/', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowUser])
-def get_all_users(db: Session = Depends(get_db)):
+def get_all_users(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     user_list = db.query(models.User).all()
     return user_list
 
 #get user model by id
 @router.get('/{user_id}', status_code = status.HTTP_200_OK, response_model=schemas.ShowUser)
-def get_user_by_id(user_id, db: Session = Depends(get_db)):
+def get_user_by_id(user_id, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     user = db.query(models.User).filter(models.User.user_id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -38,7 +38,7 @@ def get_user_by_id(user_id, db: Session = Depends(get_db)):
 
 #get user model by email
 @router.get('/email/{user_email}', status_code = status.HTTP_200_OK, response_model=schemas.ShowUser)
-def get_user_by_email(user_email, db: Session = Depends(get_db)):
+def get_user_by_email(user_email, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     user = db.query(models.User).filter(models.User.email == user_email).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -47,7 +47,7 @@ def get_user_by_email(user_email, db: Session = Depends(get_db)):
 
 #delete user by id
 @router.delete('/{user_id}', status_code = status.HTTP_200_OK)
-def delete_user(user_id, db: Session = Depends(get_db)):
+def delete_user(user_id, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     user = db.query(models.User).filter(models.User.user_id == user_id)
     if not user.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id {user_id} not found!")
@@ -57,7 +57,7 @@ def delete_user(user_id, db: Session = Depends(get_db)):
 
 #update user by id
 @router.put('/{user_id}', status_code = status.HTTP_202_ACCEPTED, response_model=schemas.ShowUser)
-def update_user_by_id(user_id, request: schemas.UpdateUser, db: Session = Depends(get_db)):
+def update_user_by_id(user_id, request: schemas.UpdateUser, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     user = db.query(models.User).filter(models.User.user_id == user_id)
     if not user.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id {user_id} not found!")

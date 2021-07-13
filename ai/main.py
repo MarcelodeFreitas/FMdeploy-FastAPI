@@ -8,12 +8,11 @@ from .database import get_db
 from typing import List
 import shutil
 import os
-from .routers import user, ai, userai
+from .routers import user, ai, userai, authentication
 from datetime import datetime
 import json
 import importlib
 import sys
-
 
 app = FastAPI()
 
@@ -32,15 +31,11 @@ models.Base.metadata.create_all(engine)
 #     with open("openapi.json", "w") as file:
 #         json.dump(openapi_data, file)
 
+
+app.include_router(authentication.router)
 app.include_router(user.router)
 app.include_router(ai.router)
 app.include_router(userai.router)
-
-@app.get("/test")
-async def test():
-    sys.path.append('./modelfiles/app')
-    script =  importlib.import_module("script")
-    await script.hello()
 
 @app.get("/")
 async def main():

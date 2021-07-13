@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
 from fastapi.responses import FileResponse
-from .. import schemas, models
+from .. import schemas, models, oauth2
 from ..database import get_db
 from typing import List
 from sqlalchemy.orm import Session
@@ -19,23 +19,23 @@ router = APIRouter(
 
 #create ai model
 @router.post('/', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)
-def create_ai(request: schemas.CreateAI, db: Session = Depends(get_db)):
+def create_ai(request: schemas.CreateAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return ai.create_ai(request, db)
 
 #get all ai models
 @router.get('/', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
-def get_all_ai(db: Session = Depends(get_db)):
+def get_all_ai(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return ai.get_all(db)
 
 #get all public ai models
 @router.get('/public', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
-def get_all_public_ai(db: Session = Depends(get_db)):
+def get_all_public_ai(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     ai_list =  db.query(models.AI).where(models.AI.is_private.is_(False)).all()
     return ai_list
 
 #get public ai models by id
 @router.get('/public/{ai_id}', status_code = status.HTTP_200_OK, response_model=schemas.ShowAI)
-def get_all_public_ai_by_id(ai_id, db: Session = Depends(get_db)):
+def get_all_public_ai_by_id(ai_id, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     ai =  db.query(models.AI).where(models.AI.is_private.is_(False)).filter(models.AI.ai_id == ai_id).first()
     if not ai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -44,7 +44,7 @@ def get_all_public_ai_by_id(ai_id, db: Session = Depends(get_db)):
 
 #get public ai model by title
 @router.get('/public/title/{title}', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
-def get_public_ai_by_title(title, db: Session = Depends(get_db)):
+def get_public_ai_by_title(title, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     ai = db.query(models.AI).where(models.AI.is_private.is_(False)).filter(models.AI.title.like(f"%{title}%")).all()
     if not ai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with title: {title} was not found!")
@@ -52,7 +52,7 @@ def get_public_ai_by_title(title, db: Session = Depends(get_db)):
 
 #get ai model by id
 @router.get('/{ai_id}', status_code = status.HTTP_200_OK, response_model=schemas.ShowAI)
-def get_ai_by_id(ai_id, db: Session = Depends(get_db)):
+def get_ai_by_id(ai_id, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     ai = db.query(models.AI).filter(models.AI.ai_id == ai_id).first()
     if not ai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -61,7 +61,7 @@ def get_ai_by_id(ai_id, db: Session = Depends(get_db)):
 
 #get ai model by title
 @router.get('/title/{title}', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
-def get_ai_by_title(title, db: Session = Depends(get_db)):
+def get_ai_by_title(title, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     ai = db.query(models.AI).filter(models.AI.title.like(f"%{title}%")).all()
     if not ai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with title: {title} was not found!")
@@ -69,16 +69,16 @@ def get_ai_by_title(title, db: Session = Depends(get_db)):
 
 #delete ai model from database tables and filesystem
 @router.delete('/', status_code = status.HTTP_200_OK)
-def delete_ai(request: schemas.UserAI, db: Session = Depends(get_db)):
+def delete_ai(request: schemas.UserAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return ai.delete(request.user_id, request.ai_id, db)
 
 #run a model by id
 @router.post('/run', status_code = status.HTTP_202_ACCEPTED)
-async def run_ai(request: schemas.RunAI, db: Session = Depends(get_db)):
+async def run_ai(request: schemas.RunAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return await ai.run_ai(request.user_id, request.ai_id, request.input_file_id, db)
 
 @router.put('/{ai_id}', status_code = status.HTTP_202_ACCEPTED, response_model=schemas.ShowAI)
-def update_ai_by_id(ai_id, request: schemas.UpdateAI, db: Session = Depends(get_db)):
+def update_ai_by_id(ai_id, request: schemas.UpdateAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
     if not ai.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
@@ -88,12 +88,12 @@ def update_ai_by_id(ai_id, request: schemas.UpdateAI, db: Session = Depends(get_
 
 #upload input file
 @router.post("/files/inputfile", status_code = status.HTTP_200_OK)
-def create_input_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
+def create_input_file(file: UploadFile = File(...), db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return files.create_input_file(db, file)
 
 #upload python script
 @router.post("/files/pythonscript")
-async def create_script_file(model_id, file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def create_script_file(model_id, file: UploadFile = File(...), db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     
     file_name = file.filename
     file_path = "./modelfiles/" + model_id + "/" + file_name
@@ -123,7 +123,7 @@ async def create_script_file(model_id, file: UploadFile = File(...), db: Session
 
 #upload model files 
 @router.post("/files/modelfiles")
-async def create_model_file(ai_id, files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
+async def create_model_file(ai_id, files: List[UploadFile] = File(...), db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     for file in files:
         file_name = file.filename
         file_path = "./modelfiles/" + ai_id + "/" + file_name
@@ -151,15 +151,15 @@ async def create_model_file(ai_id, files: List[UploadFile] = File(...), db: Sess
 
 #get model files name and path stored for a specific ai model
 @router.post("/files/check_model_files/{ai_id}", status_code = status.HTTP_200_OK)
-def check_model_files_by_id(ai_id, db: Session = Depends(get_db)):
+def check_model_files_by_id(ai_id, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return files.check_model_files(ai_id, db)
 
 #get input file name and path stored by id
 @router.post("/files/check_input_file/{input_file_id}", status_code = status.HTTP_200_OK)
-def check_input_file_by_id(input_file_id, db: Session = Depends(get_db)):
+def check_input_file_by_id(input_file_id, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return files.check_input_file(input_file_id, db)
 
 #get python file by id
 @router.post("/files/check_python_file/{ai_id}", status_code = status.HTTP_200_OK)
-def check_python_file_by_id(ai_id, db: Session = Depends(get_db)):
+def check_python_file_by_id(ai_id, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return ai.check_python_files(ai_id, db)

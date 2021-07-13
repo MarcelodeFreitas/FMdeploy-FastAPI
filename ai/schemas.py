@@ -54,13 +54,9 @@ class UpdateAI(BaseModel):
         orm_mode = True
 
 class User(BaseModel):
-    user_id: str
     name: str
     email: str
     password: str
-
-    class Config():
-        orm_mode = True
 
 class ShowUser(BaseModel):
     user_id: str
@@ -133,4 +129,9 @@ class ShareAI(BaseModel):
     class Config():
         orm_mode = True
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
+class TokenData(BaseModel):
+    email: Optional[str] = None
