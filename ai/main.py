@@ -63,6 +63,8 @@ async def main():
                     display: inline-block;
                     font-size: 16px;
                     cursor: pointer; 
+                    margin-right: 100px;
+                    margin-top: 30px;
                     font-weight: bold;
                     border-radius: 5px;
                     width: 200px"
@@ -79,7 +81,7 @@ async def main():
                     display: inline-block;
                     font-size: 16px;
                     cursor: pointer;
-                    margin: 30px 60px; 
+                    margin-top: 30px;
                     font-weight: bold;
                     border-radius: 5px;
                     width: 200px"

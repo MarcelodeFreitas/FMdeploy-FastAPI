@@ -26,11 +26,6 @@ def test(db: Session = Depends(get_db)):
     script = importlib.import_module(name)
     return {"file_exists": name[0:-3], "directory": directory, "hey": script.hello()}
 
-#run a model by id
-@router.post('/run', status_code = status.HTTP_202_ACCEPTED)
-async def run_ai(request: schemas.RunAI, db: Session = Depends(get_db)):
-    return await ai.run_ai(request.user_id, request.ai_id, request.input_file_id, db)
-
 #create ai model
 @router.post('/', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)
 def create_ai(request: schemas.CreateAI, db: Session = Depends(get_db)):
@@ -56,7 +51,7 @@ def get_all_public_ai_by_id(ai_id, db: Session = Depends(get_db)):
          detail=f"AI model with id number {ai_id} was not found in Public AIs!")
     return ai
 
-#get oublic ai model by title
+#get public ai model by title
 @router.get('/public/title/{title}', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
 def get_public_ai_by_title(title, db: Session = Depends(get_db)):
     ai = db.query(models.AI).where(models.AI.is_private.is_(False)).filter(models.AI.title.like(f"%{title}%")).all()
@@ -84,6 +79,11 @@ def get_ai_by_title(title, db: Session = Depends(get_db)):
 @router.delete('/', status_code = status.HTTP_200_OK)
 def delete_ai(request: schemas.UserAI, db: Session = Depends(get_db)):
     return ai.delete(request.user_id, request.ai_id, db)
+
+#run a model by id
+@router.post('/run', status_code = status.HTTP_202_ACCEPTED)
+async def run_ai(request: schemas.RunAI, db: Session = Depends(get_db)):
+    return await ai.run_ai(request.user_id, request.ai_id, request.input_file_id, db)
 
 @router.put('/{ai_id}', status_code = status.HTTP_202_ACCEPTED, response_model=schemas.ShowAI)
 def update_ai_by_id(ai_id, request: schemas.UpdateAI, db: Session = Depends(get_db)):
