@@ -74,3 +74,14 @@ def check_shared(user_id_beneficiary: int, ai_id: str, db: Session):
          detail=f"Ai model id: {ai_id} not shared with user id: {user_id_beneficiary}!")
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"Ai model id: {ai_id} already shared with user id: {user_id_beneficiary}!")
+
+
+def user_shared_ai_list(user_id: int, db: Session):
+    #check the user exists
+    user.get_user_by_id(user_id, db)
+    #get entries where user is the owner from UserAIList
+    userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.beneficiary == True).outerjoin(models.AI).outerjoin(models.User).all()
+    if not userai:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"User id: {user_id}, does have shared AI models in the database!")
+    return userai

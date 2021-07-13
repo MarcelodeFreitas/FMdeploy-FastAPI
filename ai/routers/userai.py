@@ -39,4 +39,4 @@ async def check_if_AImodel_is_shared_with_user(request: schemas.UserAI, db: Sess
 
 @router.get("/shared_list/{user_id}", status_code = status.HTTP_200_OK)
 async def get_list_of_AImodels_shared_with_user(user_id: int, db: Session = Depends(get_db)):
-    return userai.user_owned_ai_list(user_id, db)
+    return userai.user_shared_ai_list(user_id, db)
