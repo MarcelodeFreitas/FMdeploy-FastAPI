@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, File, UploadFile, status, Response, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from . import schemas, models
 from .database import engine
 from sqlalchemy.orm import Session
@@ -15,6 +16,8 @@ import sys
 
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 #when we run the server migrate all the models to the database
 #if the table exists nothing happens
@@ -42,43 +45,59 @@ async def test():
 @app.get("/")
 async def main():
     content = """
-<body style="margin-top: 200px; background-color: #33363B; font-family: sans-serif;">
-<center>
-<h1 style="color: #2ABF9F">Welcome to FMdeploy API</h1>
-<p style="color:white;">Developed with <a href="https://fastapi.tiangolo.com/" target="_blank" style="color: #2ABF9F">Fast API</a>. To check the documentation please use one of the links bellow:</p>
-<a style = 
-    "background-color: #2ABF9F;
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    cursor: pointer; 
-    margin: 30px 30px;
-    font-weight: bold;
-    border-radius: 5px"
-    href="/docs" target="_blank">
-    Docs Swagger UI
-</a>
-<a style = 
-    "background-color: #2ABF9F;
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    cursor: pointer;
-    margin: 30px 30px; 
-    font-weight: bold;
-    border-radius: 5px"
-    href="/redoc" target="_blank">
-    Docs ReDoc
-</a>
-</center>
-</body>
+        <body style="margin-left: 100px; background-color: #33363B; font-family: sans-serif;">
+        <div style="display: flex;">
+            <div style="flex: 50%;
+            height: 95vh;">
+                <div style="margin-bottom: 60px; margin-top: 300px">
+                    <h1 style="color: #2ABF9F; margin-bottom: 60px; font-size: 49">Welcome to FMdeploy API !</h1>
+                    <p style="color:white;">Developed with <a href="https://fastapi.tiangolo.com/" target="_blank" style="color: #2ABF9F">Fast API</a>. To check the documentation please use one of the links bellow:</p>
+                </div>
+                <a style = 
+                    "background-color: #2ABF9F;
+                    border: none;
+                    color: white;
+                    padding: 15px 32px;
+                    text-align: center;
+                    text-decoration: none;
+                    display: inline-block;
+                    font-size: 16px;
+                    cursor: pointer; 
+                    font-weight: bold;
+                    border-radius: 5px;
+                    width: 200px"
+                    href="/docs" target="_blank">
+                    Docs Swagger UI
+                </a>
+                <a style = 
+                    "background-color: #2ABF9F;
+                    border: none;
+                    color: white;
+                    padding: 15px 32px;
+                    text-align: center;
+                    text-decoration: none;
+                    display: inline-block;
+                    font-size: 16px;
+                    cursor: pointer;
+                    margin: 30px 60px; 
+                    font-weight: bold;
+                    border-radius: 5px;
+                    width: 200px"
+                    href="/redoc" target="_blank">
+                    Docs ReDoc
+                </a>
+            </div>
+            <div style="flex: 50%;
+            height: 98vh;
+            background-color: #2ABF9F">
+                <center style="margin-top: 300px">
+                    <img src="static/logo.png"/>
+                    <p style="color: white; font-size: 45; text-align: center; font-weight: bold">
+                        FMdeploy
+                    </p>
+                </center>
+            </div>
+        </div> 
+        </body>
     """
     return HTMLResponse(content=content)

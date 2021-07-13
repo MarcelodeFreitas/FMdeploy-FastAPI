@@ -13,7 +13,6 @@ router = APIRouter(
 )
 
 #AI
-
 @router.post("/check_access", status_code = status.HTTP_200_OK, response_model=schemas.UserAIList)
 async def check_access_to_ai_model(request: schemas.UserAI, db: Session = Depends(get_db)):
     return userai.check_access_ai_exception(request.user_id, request.ai_id, db)

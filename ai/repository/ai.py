@@ -9,7 +9,7 @@ import sys
 import os
 import shutil
 
-print(str(uuid.uuid4()).replace("-", ""))
+# print(str(uuid.uuid4()).replace("-", ""))
 
 def get_all(db: Session):
     ai_list = db.query(models.AI).all()
