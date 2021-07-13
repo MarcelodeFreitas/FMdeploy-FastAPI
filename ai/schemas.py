@@ -125,4 +125,12 @@ class UserAI(BaseModel):
     class Config():
         orm_mode = True
 
+class ShareAI(BaseModel):
+    user_id_sharer: int
+    user_id_beneficiary: int
+    ai_id: str
+
+    class Config():
+        orm_mode = True
+
 

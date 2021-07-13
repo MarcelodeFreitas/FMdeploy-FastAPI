@@ -69,6 +69,7 @@ async def run_ai(user_id: int, ai_id: str, input_file_id: str, db: Session):
         userai.check_access_ai_exception(user_id, ai_id, db)
     #check if input file exists
     input_file = files.check_input_file(input_file_id, db)
+    print(input_file)
     #check if the ai table has python script paths
     #check that the python script files exist in the filesystem
     python_file = check_python_files(ai_id, db)
@@ -96,9 +97,9 @@ def run_script( ai_id: str, python_file: dict, model_files: dict, input_file: di
     input_file_name = input_file.name
     input_file_path = input_file.path
     # make output directory
-    os.makedirs("./outputfiles/" + ai_id, exist_ok=True)
+    os.makedirs("./outputfiles/" + input_file.input_file_id, exist_ok=True)
 
-    output_directory_path = "./outputfiles/" + ai_id + "/"
+    output_directory_path = "./outputfiles/" + input_file.input_file_id + "/"
     output_file_name = "result_" + input_file_name
     path = "./modelfiles/" + ai_id
 

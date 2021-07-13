@@ -60,7 +60,7 @@ def create_input_file(db: Session, file: UploadFile = File(...)):
 
 def check_input_file(input_file_id: str, db: Session):
     input_file = db.query(models.InputFile).where(models.InputFile.input_file_id == input_file_id).first()
-    inputfile_name_path = db.query(models.InputFile).where(models.InputFile.input_file_id == input_file_id).with_entities(models.InputFile.name, models.InputFile.path).first()
+    inputfile_name_path = db.query(models.InputFile).where(models.InputFile.input_file_id == input_file_id).first()
     if not input_file:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"Input file with id number {input_file_id} not found in database!")
