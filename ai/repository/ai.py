@@ -98,7 +98,7 @@ def run_script( ai_id: str, python_file: dict, model_files: dict, input_file: di
     # make output directory
     os.makedirs("./outputfiles/" + ai_id, exist_ok=True)
 
-    output_directory_path = "./outputfiles/" + ai_id
+    output_directory_path = "./outputfiles/" + ai_id + "/"
     output_file_name = "result_" + input_file_name
     path = "./modelfiles/" + ai_id
 
