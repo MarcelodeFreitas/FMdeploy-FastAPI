@@ -41,10 +41,9 @@ app.include_router(userai.router)
 async def main():
     content = """
         <body style="margin-left: 100px; background-color: #33363B; font-family: sans-serif;">
-        <div style="display: flex;">
-            <div style="flex: 50%;
-            height: 95vh;">
-                <div style="margin-bottom: 60px; margin-top: 300px; margin-right: 50px">
+        <div style="display: flex; position: relative;">
+            <div style="flex: 50%; margin-top: 24vh">
+                <div style="margin-bottom: 60px; margin-right: 50px">
                     <h1 style="color: #2ABF9F; margin-bottom: 60px; font-size: 49">Welcome to FMdeploy API !</h1>
                     <p style="color:white;">Developed with <a href="https://fastapi.tiangolo.com/" target="_blank" style="color: #2ABF9F">Fast API</a>. To check the documentation please use one of the links bellow:</p>
                 </div>
@@ -88,7 +87,7 @@ async def main():
             <div style="flex: 50%;
             height: 98vh;
             background-color: #2ABF9F">
-                <center style="margin-top: 300px">
+                <center style="margin-top: 20vh">
                     <img src="static/logo.png" style="margin: 50px">
                     <p style="color: white; font-size: 45; text-align: center; font-weight: bold">
                         FMdeploy
