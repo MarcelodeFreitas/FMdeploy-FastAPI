@@ -40,60 +40,62 @@ app.include_router(userai.router)
 @app.get("/")
 async def main():
     content = """
-        <body style="margin-left: 100px; background-color: #33363B; font-family: sans-serif;">
-        <div style="display: flex; position: relative;">
-            <div style="flex: 50%; margin-top: 24vh">
-                <div style="margin-bottom: 60px; margin-right: 50px">
-                    <h1 style="color: #2ABF9F; margin-bottom: 60px; font-size: 49">Welcome to FMdeploy API !</h1>
-                    <p style="color:white;">Developed with <a href="https://fastapi.tiangolo.com/" target="_blank" style="color: #2ABF9F">Fast API</a>. To check the documentation please use one of the links bellow:</p>
-                </div>
-                <a style = 
-                    "background-color: #2ABF9F;
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            a.button{background-color: #2ABF9F;
                     border: none;
                     color: white;
-                    padding: 15px 32px;
+                    padding: 1.1em 2.1em 1.1em;
                     text-align: center;
                     text-decoration: none;
                     display: inline-block;
-                    font-size: 16px;
+                    font-size: .85em;
                     cursor: pointer; 
                     margin-right: 100px;
                     margin-top: 30px;
+                    font-size: 16px;
                     font-weight: bold;
                     border-radius: 5px;
-                    width: 200px"
-                    href="/docs" target="_blank">
+                    width: 25%}
+            .button:hover, .button:focus {
+                color: #2ABF9F;
+                background-color: white;
+            }
+        </style> 
+        <body style="margin-left: 100px; background-color: #33363B; font-family: sans-serif; height: device-width">
+        <div style="position: fixed;
+        top: 0;
+        left: 0;
+        width: 50%;
+        height: 100%;
+        padding-top: 20vh">
+            <div style="margin-right: 10%;
+            margin-left: 10%;">
+                <div style="margin-bottom: 10%; ">
+                    <h1 style="color: #2ABF9F; margin-bottom: 10%; font-size: 2.6vw">Welcome to FMdeploy API !</h1>
+                    <p style="color:white; font-size: 16px">Developed with <a href="https://fastapi.tiangolo.com/" target="_blank" style="color: #2ABF9F">Fast API</a>. To check the documentation please use one of the links bellow:</p>
+                </div>
+                <a class="button" href="/docs" target="_blank">
                     Docs Swagger UI
                 </a>
-                <a style = 
-                    "background-color: #2ABF9F;
-                    border: none;
-                    color: white;
-                    padding: 15px 32px;
-                    text-align: center;
-                    text-decoration: none;
-                    display: inline-block;
-                    font-size: 16px;
-                    cursor: pointer;
-                    margin-top: 30px;
-                    margin-right: 100px;
-                    font-weight: bold;
-                    border-radius: 5px;
-                    width: 200px"
-                    href="/redoc" target="_blank">
+                <a class="button" href="/redoc" target="_blank">
                     Docs ReDoc
                 </a>
             </div>
-            <div style="flex: 50%;
-            height: 98vh;
-            background-color: #2ABF9F">
-                <center style="margin-top: 20vh">
-                    <img src="static/logo.png" style="margin: 50px">
-                    <p style="color: white; font-size: 45; text-align: center; font-weight: bold">
+            <div style="position: fixed;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background-color: #2ABF9F;
+            padding-top: 27vh
+            ">
+                <center>
+                    <img src="static/logo2.png" style="max-width:100%; height:auto; margin-left: 10%; margin-right: 10%; margin-bottom: 4%;">
+                    <p style="color: white; font-size: 3vw; text-align: center; font-weight: bold">
                         FMdeploy
                     </p>
                 </center>
-            </div>
         </div> 
         </body>
     """
