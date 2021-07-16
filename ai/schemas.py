@@ -56,10 +56,9 @@ class UpdateAI(BaseModel):
 class User(BaseModel):
     name: str
     email: str
-    password: str
 
 class ShowUser(BaseModel):
-    user_id: str
+    """ user_id: str """
     name: str
     email: str
 
@@ -75,8 +74,8 @@ class CreateUser(BaseModel):
         orm_mode = True
 
 class UpdateUser(BaseModel):
-    name: str
-    email: str
+    new_name: Optional[str] = None
+    new_email: Optional[str] = None
 
     class Config():
         orm_mode = True

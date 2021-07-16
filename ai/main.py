@@ -1,21 +1,13 @@
-from fastapi import FastAPI, Depends, File, UploadFile, status, Response, HTTPException
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from . import schemas, models
+from . import models
 from .database import engine
-from sqlalchemy.orm import Session
-from .database import get_db
-from typing import List
-import shutil
-import os
 from .routers import user, ai, userai, authentication
-from datetime import datetime
-import json
-import importlib
-import sys
 
 app = FastAPI()
 
+#mount the static folder to get the brain logo in html
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 #when we run the server migrate all the models to the database
@@ -30,7 +22,6 @@ models.Base.metadata.create_all(engine)
 #     # Change "openapi.json" to desired filename
 #     with open("openapi.json", "w") as file:
 #         json.dump(openapi_data, file)
-
 
 app.include_router(authentication.router)
 app.include_router(user.router)
@@ -57,7 +48,7 @@ async def main():
                     font-weight: bold;
                     border-radius: 5px;
                     width: 25%}
-            .button:hover, .button:focus {
+            .button:hover {
                 color: #2ABF9F;
                 background-color: white;
             }
