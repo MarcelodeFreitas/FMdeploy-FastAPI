@@ -10,8 +10,6 @@ import sys
 import os
 import shutil
 
-# print(str(uuid.uuid4()).replace("-", ""))
-
 def get_all(db: Session):
     ai_list = db.query(models.AI).all()
     return ai_list
@@ -122,7 +120,6 @@ def run_script( ai_id: str, python_file: dict, model_files: dict, input_file: di
     script.run(input_file_path, output_file_name, output_directory_path)
 
     return output_directory_path + output_file_name
-
 
 def delete(user_id: int, ai_id: str, db: Session):
     #check if the user exists

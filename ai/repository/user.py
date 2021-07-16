@@ -106,4 +106,3 @@ def update_user_by_email(user_email: str, new_name: str, new_email: str, db: Ses
         detail=f"Email: {user_email}, is already registered!")
     return HTTPException(status_code=status.HTTP_200_OK, 
     detail=f"User data was successfully updated.")
-    

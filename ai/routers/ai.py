@@ -1,25 +1,16 @@
 from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
-from fastapi.responses import FileResponse
 from .. import schemas, models, oauth2, token
 from ..database import get_db
 from typing import List
 from sqlalchemy.orm import Session
-from ..repository import ai, user, files
+from ..repository import ai, files
 import shutil
 import os
-import importlib
-import sys
 
 router = APIRouter(
     prefix="/ai",
     tags=['AI models']
 )
-
-#AI
-
-@router.post('/get_email_from_token', status_code = status.HTTP_201_CREATED)
-def create_ai(request: schemas.CreateAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return token.verify_token("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdXRoIiwiZXhwIjoxNjI2MjA1MDE0fQ.37_ttnRrRN-Hep68a5QWWfx_gBNOl90pvFARRsv9_Do", oauth2.credentials_exception)
 
 #create ai model
 @router.post('/', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)

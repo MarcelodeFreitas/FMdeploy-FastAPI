@@ -75,7 +75,6 @@ def check_shared(user_id_beneficiary: int, ai_id: str, db: Session):
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"Ai model id: {ai_id} already shared with user id: {user_id_beneficiary}!")
 
-
 def user_shared_ai_list(user_id: int, db: Session):
     #check the user exists
     user.get_user_by_id(user_id, db)
