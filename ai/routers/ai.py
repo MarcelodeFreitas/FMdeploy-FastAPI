@@ -60,11 +60,6 @@ def delete_ai(request: schemas.UserAI, db: Session = Depends(get_db), get_curren
 async def run_ai(request: schemas.RunAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return await ai.run_ai(request.user_id, request.ai_id, request.input_file_id, db)
 
-@router.put('/{ai_id}', status_code = status.HTTP_202_ACCEPTED, response_model=schemas.ShowAI)
-def update_ai_by_id(ai_id, request: schemas.UpdateAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
-    if not ai.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
-    ai.update(request.dict())
-    db.commit()
-    return ai.first()
+@router.put('/', status_code = status.HTTP_202_ACCEPTED)
+def update_ai_by_id(request: schemas.UpdateAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return ai.update_ai_by_id_exposed(get_current_user, request.ai_id, request.title, request.description, request.output_type, request.is_private, db)

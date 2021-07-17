@@ -46,17 +46,23 @@ class CreateAICurrent(BaseModel):
     is_private: bool
     created_in: datetime
 
-
 class CreatedAI(BaseModel):
     ai_id: str
 
-
 class UpdateAI(BaseModel):
-    title: str
+    ai_id: str
+    title:  Optional[str] = None
     description: Optional[str] = None
-    output_type: str
-    is_private: bool
-    last_updated: datetime
+    output_type:  Optional[str] = None
+    is_private:  Optional[bool] = None
+
+    class Config():
+        orm_mode = True
+
+class RunAI(BaseModel):
+    user_id: int
+    ai_id: str
+    input_file_id: str
 
     class Config():
         orm_mode = True
@@ -93,14 +99,6 @@ class CreateUser(BaseModel):
 class UpdateUser(BaseModel):
     new_name: Optional[str] = None
     new_email: Optional[str] = None
-
-    class Config():
-        orm_mode = True
-
-class RunAI(BaseModel):
-    user_id: int
-    ai_id: str
-    input_file_id: str
 
     class Config():
         orm_mode = True

@@ -9,6 +9,7 @@ import importlib
 import sys
 import os
 import shutil
+from datetime import datetime
 
 def get_all(db: Session):
     ai_list = db.query(models.AI).all()
@@ -81,6 +82,13 @@ def create_ai_current(request: schemas.CreateAI, user_email: str, db: Session):
 def get_ai_by_id(ai_id: str, db: Session):
     ai = db.query(models.AI).filter(models.AI.ai_id == ai_id).first()
     if not ai:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} was not found!")
+    return ai
+
+def get_ai_query_by_id(ai_id: str, db: Session):
+    ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
+    if not ai.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"AI model with id number {ai_id} was not found!")
     return ai
@@ -191,3 +199,43 @@ def delete(user_id: int, ai_id: str, db: Session):
     #deleter from ModelFile table
     files.delete_model_files(ai_id, db)
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"The AI model id {ai_id} was successfully deleted.")
+
+def update_ai_by_id_exposed(user_email: str, ai_id: int, title: str, description: str, output_type: str, is_private: bool,  db: Session):
+    #check permissions
+    #check if owner or admin
+    if not ((user.is_admin_bool(user_email, db)) or (userai.is_owner_bool(user_email, ai_id, db))):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+         detail=f"User with email: {user_email} does not have permissions to update AI model id: {ai_id}!")
+    #check if ai exists
+    ai = get_ai_query_by_id(ai_id, db)
+    #check what data has been provided in the request
+    #check if all request fields are empty or null
+    if (title == "" or title == None) and (description == "" or description == None) and (output_type == "" or output_type == None) and (is_private == "" or is_private == None):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"Request AI model update fields are all empty!")
+    # if a request field is empty or null keep the previous value
+    #title
+    if title == "" or title == None:
+        title = ai.first().title
+    #description
+    if description == "" or description == None:
+        description = ai.first().description
+    #output_type
+    if output_type == "" or output_type == None:
+        output_type = ai.first().output_type
+    #is_private
+    if is_private == "" or is_private == None:
+        is_private = ai.first().is_private
+    #update ai in database
+    try:
+        ai.update({'title': title})
+        ai.update({'description': description})
+        ai.update({'output_type': output_type})
+        ai.update({'is_private': is_private})
+        ai.update({'last_updated': datetime.now()})
+        db.commit()
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+        detail=f"AI model with id: {ai_id} error updating database by User with email: {user_email}!")
+    return HTTPException(status_code=status.HTTP_200_OK, 
+    detail=f"AI model with id: {ai_id} was successfully updated by User with email: {user_email}.")

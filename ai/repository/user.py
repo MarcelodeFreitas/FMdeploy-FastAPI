@@ -105,7 +105,6 @@ def delete_user_by_id(user_email: str, user_id: int, db: Session):
     detail=f"User with id: {user_id} was successfully deleted.")
 
 def update_user_by_id(user_id: int, user_email: str, user_name: str, db: Session):
-    print(user_email, user_name)
     #check if user exists
     user = get_user_query_by_id(user_id, db)
     #check what data has been provided in the request
@@ -158,3 +157,8 @@ def user_is_admin(email: str, db):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
          detail=f"User with email: {email} is not an admin!")
     return user
+
+def is_admin_bool(email: str, db:Session):
+    #check user exists
+    user = get_user_by_email(email, db)
+    return user.is_admin
