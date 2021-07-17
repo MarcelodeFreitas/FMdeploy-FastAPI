@@ -2,9 +2,17 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from .. import models, hashing
 
-def get_user_by_id(user_email: str, user_id: int, db: Session):
+def get_user_by_id_exposed(user_email: str, user_id: int, db: Session):
     #check if admin
     user_is_admin(user_email, db)
+    #get user by id
+    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"User with id number: {user_id} was not found!")
+    return user
+
+def get_user_by_id(user_id: int, db: Session):
     #get user by id
     user = db.query(models.User).filter(models.User.user_id == user_id).first()
     if not user:

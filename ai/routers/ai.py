@@ -3,9 +3,7 @@ from .. import schemas, models, oauth2, token
 from ..database import get_db
 from typing import List
 from sqlalchemy.orm import Session
-from ..repository import ai, files
-import shutil
-import os
+from ..repository import ai
 
 router = APIRouter(
     prefix="/ai",
@@ -34,37 +32,23 @@ def get_all_public_ai(db: Session = Depends(get_db), get_current_user: schemas.U
 
 #get public ai models by id
 @router.get('/public/{ai_id}', status_code = status.HTTP_200_OK, response_model=schemas.ShowAI)
-def get_all_public_ai_by_id(ai_id, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    ai =  db.query(models.AI).where(models.AI.is_private.is_(False)).filter(models.AI.ai_id == ai_id).first()
-    if not ai:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"AI model with id number {ai_id} was not found in Public AIs!")
-    return ai
+def get_all_public_ai_by_id(ai_id: str, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return ai.get_public_by_id_exposed(ai_id, db)
 
 #get public ai model by title
 @router.get('/public/title/{title}', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
-def get_public_ai_by_title(title, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    ai = db.query(models.AI).where(models.AI.is_private.is_(False)).filter(models.AI.title.like(f"%{title}%")).all()
-    if not ai:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with title: {title} was not found!")
-    return ai
+def get_public_ai_by_title(title: str, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return ai.get_public_by_title_exposed(title, db)
 
 #get ai model by id
 @router.get('/{ai_id}', status_code = status.HTTP_200_OK, response_model=schemas.ShowAI)
-def get_ai_by_id(ai_id, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    ai = db.query(models.AI).filter(models.AI.ai_id == ai_id).first()
-    if not ai:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"AI model with id number {ai_id} was not found!")
-    return ai
+def get_ai_by_id(ai_id: str, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return ai.get_ai_by_id_exposed(get_current_user, ai_id, db)
 
 #get ai model by title
 @router.get('/title/{title}', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
-def get_ai_by_title(title, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    ai = db.query(models.AI).filter(models.AI.title.like(f"%{title}%")).all()
-    if not ai:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with title: {title} was not found!")
-    return ai
+def get_ai_by_title(title: str, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return ai.get_ai_by_title(title, db)
 
 #delete ai model from database tables and filesystem
 @router.delete('/', status_code = status.HTTP_200_OK)

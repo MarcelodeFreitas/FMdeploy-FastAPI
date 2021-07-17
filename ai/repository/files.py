@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from .. import schemas, models
+from typing import List
 import uuid
 import os
 import shutil
@@ -33,7 +34,7 @@ def delete_model_files(ai_id: str, db: Session):
          detail=f"AI model with id number {ai_id} error deleting from database!")
     return True
 
-def create_input_file(db: Session, file: UploadFile = File(...)):
+async def create_input_file(db: Session, file: UploadFile = File(...)):
     input_file_id = str(uuid.uuid4()).replace("-", "")
     file_name = file.filename
     file_path = "./inputfiles/" + input_file_id + "/" + file_name
@@ -75,3 +76,58 @@ def delete_python_script():
 
 def delete_model_files():
     pass
+
+async def create_pythonscript(ai_id: str, db: Session, python_file: UploadFile = File(...)):
+    
+    file_name = python_file.filename
+    file_path = "./modelfiles/" + ai_id + "/" + file_name
+
+    ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
+    #check if provided model_id is valid
+    if not ai.first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
+    #check if model already has python script
+    if ai.first().python_script_path != None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {ai_id} already has a python script!")
+    #try to update ai data fields related to python script
+    try:
+        ai.update({"python_script_name": file_name, "python_script_path": file_path })
+        db.commit()
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {ai_id} database update error!")
+    #try to write python script top filesystem
+    try:
+        os.makedirs("./modelfiles/" + ai_id, exist_ok=True)
+        with open(f"{file_path}", "wb") as buffer:
+            shutil.copyfileobj(python_file.file, buffer)  
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {file_name} filesystem write error!")
+
+    return HTTPException(status_code=status.HTTP_200_OK, detail=f"The file named {file_name} was successfully submited to model id number {ai_id}.")
+
+#ERROR: cant iterate by coroutine
+""" async def create_model_file(ai_id: str, db: Session, model_files: List[UploadFile] = File(...)):
+    for model_file in model_files:
+        file_name = model_file.filename
+        file_path = "./modelfiles/" + ai_id + "/" + file_name
+
+        ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
+        #check if provided model_id is valid
+        if not ai.first():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
+        #create a new entry in the table model file
+        try:
+            new_modelfile = models.ModelFile(fk_ai_id=ai_id, name=file_name, path=file_path)
+            db.add(new_modelfile)
+            db.commit()
+        except:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {ai_id} database commit error!")
+        #try to write python script top filesystem
+        try:
+            os.makedirs("./modelfiles/" + ai_id, exist_ok=True)
+            with open(f"{file_path}", "wb") as buffer:
+                shutil.copyfileobj(model_file.file, buffer)  
+        except:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {file_name} filesystem write error!")
+
+    return HTTPException(status_code=status.HTTP_200_OK, detail=f"Files successfully submited to model id number {ai_id}.") """

@@ -24,6 +24,35 @@ def get_all_public(db: Session):
          detail=f"No public AI models found in the database!")
     return ai_list
 
+def get_public_by_id_exposed(ai_id: str, db: Session):
+    ai =  db.query(models.AI).where(models.AI.is_private.is_(False)).filter(models.AI.ai_id == ai_id).first()
+    if not ai:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} was not found in Public AIs!")
+    return ai
+
+def get_public_by_title_exposed(title: str, db: Session):
+    ai = db.query(models.AI).where(models.AI.is_private.is_(False)).filter(models.AI.title.like(f"%{title}%")).all()
+    if not ai:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with title: {title} was not found!")
+    return ai
+
+def get_ai_by_id_exposed(user_email: str, ai_id: str, db: Session):
+    #check if user is admin
+    user.user_is_admin(user_email, db)
+    #get ai by id
+    ai = db.query(models.AI).filter(models.AI.ai_id == ai_id).first()
+    if not ai:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} was not found!")
+    return ai
+
+def get_ai_by_title(title: str, db: Session):
+    ai = db.query(models.AI).filter(models.AI.title.like(f"%{title}%")).all()
+    if not ai:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with title: {title} was not found!")
+    return ai
+
 def create_ai_entry(ai_id: str, request: schemas.CreateAI, db: Session):
     new_ai = models.AI(ai_id = ai_id, title=request.title, description=request.description, output_type=request.output_type,is_private=request.is_private, created_in=request.created_in)
     try:

@@ -34,7 +34,7 @@ def create_administrator(request: schemas.CreateUser, db: Session = Depends(get_
 #get user by id
 @router.get('/admin/id/{user_id}', status_code = status.HTTP_200_OK, response_model=schemas.ShowUserAdmin)
 def get_user_by_id(user_id, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return user.get_user_by_id(get_current_user, user_id, db)
+    return user.get_user_by_id_exposed(get_current_user, user_id, db)
 
 #get current user
 @router.get('/current', status_code = status.HTTP_200_OK, response_model=schemas.ShowUser)

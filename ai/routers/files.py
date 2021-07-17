@@ -14,44 +14,19 @@ router = APIRouter(
 
 #upload input file
 @router.post("/inputfile", status_code = status.HTTP_200_OK)
-def create_input_file(file: UploadFile = File(...), db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+async def create_input_file(file: UploadFile = File(...), db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return files.create_input_file(db, file)
 
 #upload python script
-@router.post("/pythonscript")
-async def create_script_file(model_id, file: UploadFile = File(...), db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    
-    file_name = file.filename
-    file_path = "./modelfiles/" + model_id + "/" + file_name
-
-    ai = db.query(models.AI).filter(models.AI.ai_id == model_id)
-    #check if provided model_id is valid
-    if not ai.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {model_id} not found!")
-    #check if model already has python script
-    if ai.first().python_script_path != None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {model_id} already has a python script!")
-    #try to update ai data fields related to python script
-    try:
-        ai.update({"python_script_name": file_name, "python_script_path": file_path })
-        db.commit()
-    except:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {model_id} database update error!")
-    #try to write python script top filesystem
-    try:
-        os.makedirs("./modelfiles/" + model_id, exist_ok=True)
-        with open(f"{file_path}", "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)  
-    except:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {file_name} filesystem write error!")
-
-    return HTTPException(status_code=status.HTTP_200_OK, detail=f"The file named {file_name} was successfully submited to model id number {model_id}.")
+@router.post("/pythonscript/{ai_id}")
+async def create_script_file(ai_id: str, python_file: UploadFile = File(...), db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return files.create_pythonscript(ai_id, db, python_file)
 
 #upload model files 
-@router.post("/modelfiles")
-async def create_model_file(ai_id, files: List[UploadFile] = File(...), db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    for file in files:
-        file_name = file.filename
+@router.post("/modelfiles/{ai_id}")
+async def create_model_file(ai_id: str, model_files: List[UploadFile] = File(...), db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    for model_file in model_files:
+        file_name = model_file.filename
         file_path = "./modelfiles/" + ai_id + "/" + file_name
 
         ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
@@ -69,7 +44,7 @@ async def create_model_file(ai_id, files: List[UploadFile] = File(...), db: Sess
         try:
             os.makedirs("./modelfiles/" + ai_id, exist_ok=True)
             with open(f"{file_path}", "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)  
+                shutil.copyfileobj(model_file.file, buffer)  
         except:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {file_name} filesystem write error!")
 
