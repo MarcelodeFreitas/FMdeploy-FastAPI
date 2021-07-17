@@ -101,7 +101,7 @@ async def create_pythonscript(ai_id: str, db: Session, python_file: UploadFile =
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"The file named {file_name} was successfully submited to model id number {ai_id}.")
 
 #ERROR: cant iterate by coroutine
-""" async def create_model_file(ai_id: str, db: Session, model_files: List[UploadFile] = File(...)):
+async def create_model_files(ai_id: str, db: Session, model_files: List[UploadFile] = File(...)):
     for model_file in model_files:
         file_name = model_file.filename
         file_path = "./modelfiles/" + ai_id + "/" + file_name
@@ -125,4 +125,4 @@ async def create_pythonscript(ai_id: str, db: Session, python_file: UploadFile =
         except:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {file_name} filesystem write error!")
 
-    return HTTPException(status_code=status.HTTP_200_OK, detail=f"Files successfully submited to model id number {ai_id}.") """
+    return HTTPException(status_code=status.HTTP_200_OK, detail=f"Files successfully submited to model id number {ai_id}.")
