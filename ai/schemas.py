@@ -57,8 +57,15 @@ class UpdateAI(BaseModel):
     class Config():
         orm_mode = True
 
-class RunAI(BaseModel):
+class RunAIAdmin(BaseModel):
     user_id: int
+    ai_id: str
+    input_file_id: str
+
+    class Config():
+        orm_mode = True
+
+class RunAI(BaseModel):
     ai_id: str
     input_file_id: str
 

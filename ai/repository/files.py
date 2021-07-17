@@ -35,15 +35,15 @@ def delete_model_files(ai_id: str, db: Session):
          detail=f"AI model with id number {ai_id} error deleting from database!")
     return True
 
-async def create_input_file(db: Session, file: UploadFile = File(...)):
+async def create_input_file(db: Session, input_file: UploadFile = File(...)):
     input_file_id = str(uuid.uuid4()).replace("-", "")
-    file_name = file.filename
+    file_name = input_file.filename
     file_path = "./inputfiles/" + input_file_id + "/" + file_name
 
     try:
         os.makedirs("./inputfiles/" + input_file_id, exist_ok=True)
         with open(f"{file_path}", "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)  
+                shutil.copyfileobj(input_file.file, buffer)  
     except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"Input File with id number: {input_file_id} and name: {file_name} filesystem write error!")
@@ -100,7 +100,6 @@ async def create_pythonscript(ai_id: str, db: Session, python_file: UploadFile =
 
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"The file named {file_name} was successfully submited to model id number {ai_id}.")
 
-#ERROR: cant iterate by coroutine
 async def create_model_files(ai_id: str, db: Session, model_files: List[UploadFile] = File(...)):
     for model_file in model_files:
         file_name = model_file.filename

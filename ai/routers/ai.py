@@ -66,6 +66,11 @@ def delete_ai(ai_id: str, db: Session = Depends(get_db), get_current_user: schem
     return ai.delete_admin(get_current_user, ai_id, db)
 
 #run a model by id
+@router.post('/admin/run', status_code = status.HTTP_202_ACCEPTED)
+async def run_ai_by_id(request: schemas.RunAIAdmin, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return await ai.run_ai_admin(get_current_user, request.user_id, request.ai_id, request.input_file_id, db)
+
+#run an ai model with current user
 @router.post('/run', status_code = status.HTTP_202_ACCEPTED)
 async def run_ai(request: schemas.RunAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return await ai.run_ai(request.user_id, request.ai_id, request.input_file_id, db)
+    return await ai.run_ai(get_current_user, request.ai_id, request.input_file_id, db)

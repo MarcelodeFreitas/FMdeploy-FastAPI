@@ -14,8 +14,8 @@ router = APIRouter(
 
 #upload input file
 @router.post("/inputfile", status_code = status.HTTP_200_OK)
-async def create_input_file(file: UploadFile = File(...), db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return files.create_input_file(db, file)
+async def create_input_file(input_file: UploadFile = File(...), db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return await files.create_input_file(db, input_file)
 
 #upload python script
 @router.post("/pythonscript/{ai_id}")

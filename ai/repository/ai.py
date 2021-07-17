@@ -111,9 +111,38 @@ def check_public_by_id(ai_id: str, db: Session):
         return False
     return True
 
-async def run_ai(user_id: int, ai_id: str, input_file_id: str, db: Session):
+async def run_ai_admin(current_user_email: str, user_id: int, ai_id: str, input_file_id: str, db: Session):
+    #check permissions
+    user.user_is_admin(current_user_email, db)
     #check if the user id provided exists
     user.get_user_by_id(user_id, db)
+    #check if the ai id provided exists
+    get_ai_by_id(ai_id, db)
+    #check if the ai model is public
+    if not check_public_by_id(ai_id, db):
+        #check if the user has access to this ai model
+        #by checking the userailist table
+        userai.check_access_ai_exception(user_id, ai_id, db)
+    #check if input file exists
+    input_file = files.check_input_file(input_file_id, db)
+    #check if the ai table has python script paths
+    #check that the python script files exist in the filesystem
+    python_file = check_python_files(ai_id, db)
+    #check if the table modelfile has files associated with this ai model
+    #check if those files exist in the file system
+    model_files = files.check_model_files(ai_id, db)
+    # run the ai model
+    output_file_path = run_script(ai_id, python_file, model_files, input_file)
+    #check if result file exists
+    if not os.path.isfile(output_file_path):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"There is no output file at: {output_file_path}!")
+    
+    return FileResponse(output_file_path, media_type="application/gzip", filename="result_" + input_file.name)
+
+async def run_ai(current_user_email: str, ai_id: str, input_file_id: str, db: Session):
+    #check if the user id provided exists
+    user_id = user.get_user_by_email(current_user_email, db).user_id
     #check if the ai id provided exists
     get_ai_by_id(ai_id, db)
     #check if the ai model is public
