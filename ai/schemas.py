@@ -34,7 +34,6 @@ class CreateAI(BaseModel):
     description: Optional[str]
     output_type: str
     is_private: bool
-    created_in: datetime
 
     class Config():
         orm_mode = True
@@ -44,7 +43,6 @@ class CreateAICurrent(BaseModel):
     description: Optional[str]
     output_type: str
     is_private: bool
-    created_in: datetime
 
 class CreatedAI(BaseModel):
     ai_id: str

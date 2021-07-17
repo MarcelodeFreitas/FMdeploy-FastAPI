@@ -23,6 +23,13 @@ def check_owner(user_id: int, ai_id: str, db):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"User id: {user_id}, ai model id: {ai_id} is not the owner!")
     return entry
 
+def get_owner(ai_id: str, db):
+    user = db.query(models.User).where(and_(models.UserAIList.fk_ai_id == ai_id, models.UserAIList.owner == True)).outerjoin(models.UserAIList).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"error get_owner!")
+    return user
+
 def is_owner_bool(user_email: str, ai_id: str, db):
     user_id = user.get_user_by_email(user_email, db).user_id
     entry = db.query(models.UserAIList).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.fk_ai_id == ai_id).with_entities(models.UserAIList.owner).first()

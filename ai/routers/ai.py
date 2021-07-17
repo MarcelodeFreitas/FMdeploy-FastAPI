@@ -10,20 +10,25 @@ router = APIRouter(
     tags=['AI models']
 )
 
+#get all ai models
+@router.get('/admin', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
+def get_all_ai(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return ai.get_all_exposed(get_current_user, db)
+
+#update ai model data
+@router.put('/', status_code = status.HTTP_202_ACCEPTED)
+def update_ai(request: schemas.UpdateAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return ai.update_ai_by_id_exposed(get_current_user, request.ai_id, request.title, request.description, request.output_type, request.is_private, db)
+
 #create ai model
-@router.post('/', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)
+@router.post('/admin', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)
 def create_ai(request: schemas.CreateAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return ai.create_ai(request, db)
+    return ai.create_ai_admin(get_current_user, request, db)
 
 #create ai model with current user
-@router.post('/current', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)
-def create_ai_with_current_user(request: schemas.CreateAICurrent, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+@router.post('/', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)
+def create_ai(request: schemas.CreateAICurrent, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return ai.create_ai_current(request, get_current_user, db)
-
-#get all ai models
-@router.get('/', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
-def get_all_ai(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return ai.get_all(db)
 
 #get all public ai models
 @router.get('/public', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowAI])
@@ -51,15 +56,16 @@ def get_ai_by_title(title: str, db: Session = Depends(get_db), get_current_user:
     return ai.get_ai_by_title(title, db)
 
 #delete ai model from database tables and filesystem
-@router.delete('/', status_code = status.HTTP_200_OK)
-def delete_ai(request: schemas.UserAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return ai.delete(request.user_id, request.ai_id, db)
+@router.delete('/{ai_id}', status_code = status.HTTP_200_OK)
+def delete_ai(ai_id: str, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return ai.delete(get_current_user, ai_id, db)
+
+#delete ai model from database tables and filesystem
+@router.delete('/admin/{ai_id}', status_code = status.HTTP_200_OK)
+def delete_ai(ai_id: str, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return ai.delete_admin(get_current_user, ai_id, db)
 
 #run a model by id
 @router.post('/run', status_code = status.HTTP_202_ACCEPTED)
 async def run_ai(request: schemas.RunAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return await ai.run_ai(request.user_id, request.ai_id, request.input_file_id, db)
-
-@router.put('/', status_code = status.HTTP_202_ACCEPTED)
-def update_ai_by_id(request: schemas.UpdateAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return ai.update_ai_by_id_exposed(get_current_user, request.ai_id, request.title, request.description, request.output_type, request.is_private, db)

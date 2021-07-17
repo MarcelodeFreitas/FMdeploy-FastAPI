@@ -24,8 +24,9 @@ def check_model_files(ai_id: str, db: Session):
 def delete_model_files(ai_id: str, db: Session):
     modelfiles = db.query(models.ModelFile).where(models.ModelFile.fk_ai_id == ai_id).all()
     if not modelfiles:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"AI model with id number {ai_id} has no model files in database!")
+        return True
+        """ raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} has no model files in database!") """
     try:
         modelfiles.delete(synchronize_session=False)
         db.commit()
@@ -70,12 +71,6 @@ def check_input_file(input_file_id: str, db: Session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
         detail=f"Input file with id number: {input_file_id}, path: {input_file.path}, does not exist in the filesystem !")
     return inputfile_name_path
-
-def delete_python_script():
-    pass
-
-def delete_model_files():
-    pass
 
 async def create_pythonscript(ai_id: str, db: Session, python_file: UploadFile = File(...)):
     

@@ -18,6 +18,16 @@ def get_all(db: Session):
          detail=f"No AI models found in the database!")
     return ai_list
 
+def get_all_exposed(user_email: str, db: Session):
+    #check if admin
+    user.user_is_admin(user_email, db)
+    #listall ai models
+    ai_list = db.query(models.AI).all()
+    if not ai_list:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"No AI models found in the database!")
+    return ai_list
+
 def get_all_public(db: Session):
     ai_list =  db.query(models.AI).where(models.AI.is_private.is_(False)).all()
     if not ai_list:
@@ -55,7 +65,7 @@ def get_ai_by_title(title: str, db: Session):
     return ai
 
 def create_ai_entry(ai_id: str, request: schemas.CreateAI, db: Session):
-    new_ai = models.AI(ai_id = ai_id, title=request.title, description=request.description, output_type=request.output_type,is_private=request.is_private, created_in=request.created_in)
+    new_ai = models.AI(ai_id = ai_id, title=request.title, description=request.description, output_type=request.output_type,is_private=request.is_private, created_in=datetime.now())
     try:
         db.add(new_ai)
         db.commit()
@@ -65,8 +75,10 @@ def create_ai_entry(ai_id: str, request: schemas.CreateAI, db: Session):
          detail=f"AI model with id number {ai_id} error creating AI table entry!")
     return new_ai
 
-def create_ai(request: schemas.CreateAI, db: Session):
+def create_ai_admin(user_email: str, request: schemas.CreateAI, db: Session):
     ai_id = str(uuid.uuid4()).replace("-", "")
+    #check admin
+    user.user_is_admin(user_email, db)
     user.get_user_by_id(request.user_id, db)
     create_ai_entry(ai_id, request, db)
     userai.create_ai_user_list_entry(request.user_id, ai_id, db)
@@ -164,26 +176,14 @@ def run_script( ai_id: str, python_file: dict, model_files: dict, input_file: di
 
     return output_directory_path + output_file_name
 
-def delete(user_id: int, ai_id: str, db: Session):
-    #check if the user exists
-    user.get_user_by_id(user_id, db)
+def delete(user_email: str, ai_id: str, db: Session):
     #check if the ai exists
     get_ai_by_id(ai_id, db)
-    #check if the user is the owner
-    is_owner = userai.check_owner(user_id, ai_id, db)
-    if not is_owner:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-         detail=f"User with id: {user_id} is not the owner of the AI model id: {ai_id}!")
-    #delete ai folder from filesystem
-    path = "./modelfiles/" + ai_id
-    if not os.path.isdir(path):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"AI model with id number {ai_id} has no file directory!")
-    try:
-        shutil.rmtree(path)
-    except:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"AI model with id number {ai_id} has no directory in the filesystem!")
+    #get current user id
+    user_id = user.get_user_by_email(user_email, db).user_id
+    #check permissions
+    #only the owner can delete ai model
+    userai.check_owner(user_id, ai_id, db)
     #delete ai from database
     ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
     if not ai.first():
@@ -198,6 +198,53 @@ def delete(user_id: int, ai_id: str, db: Session):
     userai.delete(user_id, ai_id, db)
     #deleter from ModelFile table
     files.delete_model_files(ai_id, db)
+    #delete ai folder from filesystem
+    path = "./modelfiles/" + ai_id
+    if not os.path.isdir(path):
+        pass
+        """ raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} has no file directory!") """
+    try:
+        shutil.rmtree(path)
+    except:
+        pass
+        """ raise HTTPException(status_code=status.HTTP_200_OK,
+         detail=f"AI model with id number {ai_id} has no directory in the filesystem!") """
+    return HTTPException(status_code=status.HTTP_200_OK, detail=f"The AI model id {ai_id} was successfully deleted.")
+
+def delete_admin(user_email: str, ai_id: str, db: Session):
+    #check if the ai exists
+    ai_object = get_ai_by_id(ai_id, db)
+    #check permissions
+    user.user_is_admin(user_email, db)
+    #get owner id for ai model
+    owner_id = userai.get_owner(ai_id, db).user_id
+    #delete ai from database
+    ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
+    if not ai.first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
+    try:
+        ai.delete(synchronize_session=False)
+        db.commit()
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} error deleting from database!")
+    #delete from UserAI List
+    userai.delete(owner_id, ai_id, db)
+    #deleter from ModelFile table
+    files.delete_model_files(ai_id, db)
+    #delete ai folder from filesystem
+    path = "./modelfiles/" + ai_id
+    if not os.path.isdir(path):
+        pass
+        """ raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} has no file directory!") """
+    try:
+        shutil.rmtree(path)
+    except:
+        pass
+        """ raise HTTPException(status_code=status.HTTP_200_OK,
+         detail=f"AI model with id number {ai_id} has no directory in the filesystem!") """
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"The AI model id {ai_id} was successfully deleted.")
 
 def update_ai_by_id_exposed(user_email: str, ai_id: int, title: str, description: str, output_type: str, is_private: bool,  db: Session):

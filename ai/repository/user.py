@@ -159,6 +159,5 @@ def user_is_admin(email: str, db):
     return user
 
 def is_admin_bool(email: str, db:Session):
-    #check user exists
     user = get_user_by_email(email, db)
     return user.is_admin
