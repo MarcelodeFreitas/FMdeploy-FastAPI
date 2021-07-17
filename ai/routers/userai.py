@@ -1,11 +1,9 @@
-from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
+from fastapi import APIRouter, status, Depends
 from .. import schemas, models, oauth2
 from ..database import get_db
 from typing import List
 from sqlalchemy.orm import Session
-from ..repository import ai, user, userai
-import shutil
-import os
+from ..repository import userai
 
 router = APIRouter(
     prefix="/userai",

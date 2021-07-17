@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
-from .. import schemas, models, oauth2, token
+from fastapi import APIRouter, HTTPException, status, Depends
+from .. import schemas, models, oauth2
 from ..database import get_db
 from typing import List
 from sqlalchemy.orm import Session
