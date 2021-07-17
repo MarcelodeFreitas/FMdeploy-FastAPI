@@ -39,6 +39,14 @@ class CreateAI(BaseModel):
     class Config():
         orm_mode = True
 
+class CreateAICurrent(BaseModel):
+    title: str
+    description: Optional[str]
+    output_type: str
+    is_private: bool
+    created_in: datetime
+
+
 class CreatedAI(BaseModel):
     ai_id: str
 
@@ -61,6 +69,15 @@ class ShowUser(BaseModel):
     """ user_id: str """
     name: str
     email: str
+
+    class Config():
+        orm_mode = True
+
+class ShowUserAdmin(BaseModel):
+    user_id: str 
+    name: str
+    email: str
+    is_admin: bool
 
     class Config():
         orm_mode = True

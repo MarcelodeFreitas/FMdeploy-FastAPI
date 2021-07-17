@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from . import models
 from .database import engine
-from .routers import user, ai, userai, authentication
+from .routers import user, ai, userai, authentication, files
 
 app = FastAPI()
 
@@ -26,6 +26,7 @@ models.Base.metadata.create_all(engine)
 app.include_router(authentication.router)
 app.include_router(user.router)
 app.include_router(ai.router)
+app.include_router(files.router)
 app.include_router(userai.router)
 
 @app.get("/")

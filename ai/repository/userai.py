@@ -84,3 +84,14 @@ def user_shared_ai_list(user_id: int, db: Session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"User id: {user_id}, does have shared AI models in the database!")
     return userai
+
+def create_ai_user_list_entry(user_id: str, ai_id: int, db: Session):
+    new_ai_user_list = models.UserAIList(fk_user_id=user_id, fk_ai_id=ai_id,owner=True, beneficiary=False)
+    try:
+        db.add(new_ai_user_list)
+        db.commit()
+        db.refresh(new_ai_user_list)
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} error creating AIUserList table entry!")
+    return new_ai_user_list

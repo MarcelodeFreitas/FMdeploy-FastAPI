@@ -12,6 +12,16 @@ import shutil
 
 def get_all(db: Session):
     ai_list = db.query(models.AI).all()
+    if not ai_list:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"No AI models found in the database!")
+    return ai_list
+
+def get_all_public(db: Session):
+    ai_list =  db.query(models.AI).where(models.AI.is_private.is_(False)).all()
+    if not ai_list:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"No public AI models found in the database!")
     return ai_list
 
 def create_ai_entry(ai_id: str, request: schemas.CreateAI, db: Session):
@@ -25,22 +35,18 @@ def create_ai_entry(ai_id: str, request: schemas.CreateAI, db: Session):
          detail=f"AI model with id number {ai_id} error creating AI table entry!")
     return new_ai
 
-def create_ai_user_list_entry(user_id: str, ai_id: int, db: Session):
-    new_ai_user_list = models.UserAIList(fk_user_id=user_id, fk_ai_id=ai_id,owner=True, beneficiary=False)
-    try:
-        db.add(new_ai_user_list)
-        db.commit()
-        db.refresh(new_ai_user_list)
-    except:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"AI model with id number {ai_id} error creating AIUserList table entry!")
-    return new_ai_user_list
-
 def create_ai(request: schemas.CreateAI, db: Session):
     ai_id = str(uuid.uuid4()).replace("-", "")
     user.get_user_by_id(request.user_id, db)
     create_ai_entry(ai_id, request, db)
-    create_ai_user_list_entry(request.user_id, ai_id, db)
+    userai.create_ai_user_list_entry(request.user_id, ai_id, db)
+    return {"ai_id": ai_id}
+
+def create_ai_current(request: schemas.CreateAI, user_email: str, db: Session):
+    ai_id = str(uuid.uuid4()).replace("-", "")
+    user_object = user.get_user_by_email(user_email, db)
+    create_ai_entry(ai_id, request, db)
+    userai.create_ai_user_list_entry(user_object.user_id, ai_id, db)
     return {"ai_id": ai_id}
 
 def get_ai_by_id(ai_id: str, db: Session):

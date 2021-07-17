@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from .. import schemas, models, hashing
+from .. import models, hashing
 
 def get_user_by_id(user_id: int, db: Session):
     user = db.query(models.User).filter(models.User.user_id == user_id).first()
@@ -26,6 +26,19 @@ def create_user(name: str, email: str, password: str, db: Session):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, 
         detail=f"Email: {email}, is already registered!")
     return new_user
+
+def create_admin(name: str, email: str, password: str, db: Session):
+    new_user = models.User(name=name, email=email, password=hashing.Hash.bcrypt(password), is_admin=True)
+    try: 
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+    except:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, 
+        detail=f"Email: {email}, is already registered!")
+    return new_user
+
+""" create_admin("admin", "admin@gmail.com", "um.2021", ) """
 
 def get_all_users(db: Session):
     user_list = db.query(models.User).all()

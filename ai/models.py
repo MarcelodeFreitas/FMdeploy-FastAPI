@@ -12,6 +12,7 @@ class User(Base):
     name = Column(String)
     email = Column(String, unique=True)
     password = Column(String)
+    is_admin = Column(Boolean, default=False, nullable=True)
     
 class UserAIList(Base):
     __tablename__ = 'userailist'
