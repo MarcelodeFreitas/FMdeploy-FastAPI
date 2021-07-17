@@ -5,6 +5,7 @@ from typing import List
 import uuid
 import os
 import shutil
+from . import user, userai
 
 def check_model_files(ai_id: str, db: Session):
     modelfiles = db.query(models.ModelFile).where(models.ModelFile.fk_ai_id == ai_id).all()
@@ -72,8 +73,13 @@ def check_input_file(input_file_id: str, db: Session):
         detail=f"Input file with id number: {input_file_id}, path: {input_file.path}, does not exist in the filesystem !")
     return inputfile_name_path
 
-async def create_pythonscript(ai_id: str, db: Session, python_file: UploadFile = File(...)):
-    
+async def create_pythonscript(current_user_email: str, ai_id: str, db: Session, python_file: UploadFile = File(...)):
+    #check permissions
+    #check if owner or admin
+    if not ((user.is_admin_bool(current_user_email, db)) or (userai.is_owner_bool(current_user_email, ai_id, db))):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+         detail=f"User with email: {current_user_email} does not have permissions to update AI model id: {ai_id}!")
+
     file_name = python_file.filename
     file_path = "./modelfiles/" + ai_id + "/" + file_name
 
@@ -100,7 +106,13 @@ async def create_pythonscript(ai_id: str, db: Session, python_file: UploadFile =
 
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"The file named {file_name} was successfully submited to model id number {ai_id}.")
 
-async def create_model_files(ai_id: str, db: Session, model_files: List[UploadFile] = File(...)):
+async def create_model_files(current_user_email: str, ai_id: str, db: Session, model_files: List[UploadFile] = File(...)):
+    #check permissions
+    #check if owner or admin
+    if not ((user.is_admin_bool(current_user_email, db)) or (userai.is_owner_bool(current_user_email, ai_id, db))):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+         detail=f"User with email: {current_user_email} does not have permissions to update AI model id: {ai_id}!")
+
     for model_file in model_files:
         file_name = model_file.filename
         file_path = "./modelfiles/" + ai_id + "/" + file_name
