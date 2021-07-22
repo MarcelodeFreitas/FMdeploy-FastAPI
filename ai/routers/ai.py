@@ -74,3 +74,11 @@ async def run_ai_by_id(request: schemas.RunAIAdmin, db: Session = Depends(get_db
 @router.post('/run', status_code = status.HTTP_202_ACCEPTED)
 async def run_ai(request: schemas.RunAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return await ai.run_ai(get_current_user, request.ai_id, request.input_file_id, db)
+
+@router.get("/test/notAuth")
+def test():
+    return "hey"
+
+@router.get("/test/auth")
+def test(get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return "hey secure"
