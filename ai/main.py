@@ -4,8 +4,23 @@ from fastapi.staticfiles import StaticFiles
 from . import models
 from .database import engine
 from .routers import user, ai, userai, authentication, files
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+#CORS
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 #mount the static folder to get the brain logo in html
 app.mount("/static", StaticFiles(directory="static"), name="static")
