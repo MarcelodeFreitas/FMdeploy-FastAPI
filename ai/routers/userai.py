@@ -23,9 +23,9 @@ async def check_access_to_ai_model_boolean(request: schemas.UserAI, db: Session 
 async def check_if_owner(request: schemas.UserAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return userai.check_owner(request.user_id, request.ai_id, db)
 
-@router.get("/owned_list/{user_id}", status_code = status.HTTP_200_OK)
-async def get_list_of_AImodels_owned_by_user(user_id: int, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return userai.user_owned_ai_list(user_id, db)
+@router.get("/owned_list", status_code = status.HTTP_200_OK)
+async def get_list_of_AImodels_owned_by_user(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return userai.user_owned_ai_list(get_current_user, db)
 
 @router.post("/share", status_code = status.HTTP_200_OK, response_model=schemas.UserAIList)
 async def get_list_of_AImodels_owned_by_user(request: schemas.ShareAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):

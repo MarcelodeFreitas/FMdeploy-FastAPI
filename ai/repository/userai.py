@@ -49,9 +49,9 @@ def delete(user_id: int, ai_id: str, db: Session):
          detail=f"User id: {user_id}, ai model id: {ai_id} error deleting from database!")
     return True
 
-def user_owned_ai_list(user_id: int, db: Session):
+def user_owned_ai_list(current_user_email: str, db: Session):
     #check the user exists
-    user.get_user_by_id(user_id, db)
+    user_id = user.get_user_by_email(current_user_email, db).user_id
     #get entries where user is the owner from UserAIList
     userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == True).outerjoin(models.AI).outerjoin(models.User).all()
     if not userai:
