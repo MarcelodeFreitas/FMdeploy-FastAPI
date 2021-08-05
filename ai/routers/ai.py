@@ -16,7 +16,7 @@ def get_all_ai(db: Session = Depends(get_db), get_current_user: schemas.User = D
     return ai.get_all_exposed(get_current_user, db)
 
 #update ai model data
-@router.put('/', status_code = status.HTTP_202_ACCEPTED)
+@router.put('', status_code = status.HTTP_202_ACCEPTED)
 def update_ai(request: schemas.UpdateAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return ai.update_ai_by_id_exposed(get_current_user, request.ai_id, request.title, request.description, request.output_type, request.is_private, db)
 
@@ -26,7 +26,7 @@ def create_ai(request: schemas.CreateAI, db: Session = Depends(get_db), get_curr
     return ai.create_ai_admin(get_current_user, request, db)
 
 #create ai model with current user
-@router.post('/', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)
+@router.post('', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)
 def create_ai(request: schemas.CreateAICurrent, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return ai.create_ai_current(request, get_current_user, db)
 
