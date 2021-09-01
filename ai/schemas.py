@@ -6,6 +6,7 @@ class AI(BaseModel):
     ai_id: str
     title: str
     description: Optional[str] = None
+    input_type: str
     output_type: str
     is_private: bool
     python_script_name: Optional[str] = None
@@ -20,6 +21,7 @@ class ShowAI(BaseModel):
     ai_id: str
     title: str
     description: Optional[str] = None
+    input_type: str
     output_type: str
     is_private: bool
     created_in: datetime 
@@ -32,6 +34,7 @@ class CreateAI(BaseModel):
     user_id: int
     title: str
     description: Optional[str]
+    input_type: str
     output_type: str
     is_private: bool
 
@@ -41,6 +44,7 @@ class CreateAI(BaseModel):
 class CreateAICurrent(BaseModel):
     title: str
     description: Optional[str]
+    input_type: str
     output_type: str
     is_private: bool
 
@@ -51,6 +55,7 @@ class UpdateAI(BaseModel):
     ai_id: str
     title:  Optional[str] = None
     description: Optional[str] = None
+    input_type: str
     output_type:  Optional[str] = None
     is_private:  Optional[bool] = None
 

@@ -29,6 +29,7 @@ class AI(Base):
     ai_files = relationship("ModelFile")
     title = Column(String, nullable=False)
     description = Column(String, nullable=False)
+    input_type = Column(String, nullable=False)
     output_type = Column(String, nullable=False)
     python_script_name = Column(String, nullable=True)
     python_script_path = Column(String, nullable=True)

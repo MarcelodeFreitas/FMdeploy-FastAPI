@@ -65,7 +65,7 @@ def get_ai_by_title(title: str, db: Session):
     return ai
 
 def create_ai_entry(ai_id: str, request: schemas.CreateAI, db: Session):
-    new_ai = models.AI(ai_id = ai_id, title=request.title, description=request.description, output_type=request.output_type,is_private=request.is_private, created_in=datetime.now())
+    new_ai = models.AI(ai_id = ai_id, title=request.title, description=request.description, input_type=request.input_type, output_type=request.output_type, is_private=request.is_private, created_in=datetime.now())
     try:
         db.add(new_ai)
         db.commit()
@@ -276,7 +276,7 @@ def delete_admin(user_email: str, ai_id: str, db: Session):
          detail=f"AI model with id number {ai_id} has no directory in the filesystem!") """
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"The AI model id {ai_id} was successfully deleted.")
 
-def update_ai_by_id_exposed(user_email: str, ai_id: int, title: str, description: str, output_type: str, is_private: bool,  db: Session):
+def update_ai_by_id_exposed(user_email: str, ai_id: int, title: str, description: str, input_type: str, output_type: str, is_private: bool,  db: Session):
     #check permissions
     #check if owner or admin
     if not ((user.is_admin_bool(user_email, db)) or (userai.is_owner_bool(user_email, ai_id, db))):
@@ -286,7 +286,7 @@ def update_ai_by_id_exposed(user_email: str, ai_id: int, title: str, description
     ai = get_ai_query_by_id(ai_id, db)
     #check what data has been provided in the request
     #check if all request fields are empty or null
-    if (title == "" or title == None) and (description == "" or description == None) and (output_type == "" or output_type == None) and (is_private == "" or is_private == None):
+    if (title == "" or title == None) and (description == "" or description == None) and (input_type == "" or input_type == None) and (output_type == "" or output_type == None) and (is_private == "" or is_private == None):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"Request AI model update fields are all empty!")
     # if a request field is empty or null keep the previous value
@@ -296,6 +296,9 @@ def update_ai_by_id_exposed(user_email: str, ai_id: int, title: str, description
     #description
     if description == "" or description == None:
         description = ai.first().description
+    #input_type
+    if input_type == "" or input_type == None:
+        input_type = ai.first().input_type
     #output_type
     if output_type == "" or output_type == None:
         output_type = ai.first().output_type
@@ -306,6 +309,7 @@ def update_ai_by_id_exposed(user_email: str, ai_id: int, title: str, description
     try:
         ai.update({'title': title})
         ai.update({'description': description})
+        ai.update({'input_type': input_type})
         ai.update({'output_type': output_type})
         ai.update({'is_private': is_private})
         ai.update({'last_updated': datetime.now()})

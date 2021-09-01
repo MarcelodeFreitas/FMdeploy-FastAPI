@@ -18,7 +18,7 @@ def get_all_ai(db: Session = Depends(get_db), get_current_user: schemas.User = D
 #update ai model data
 @router.put('', status_code = status.HTTP_202_ACCEPTED)
 def update_ai(request: schemas.UpdateAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return ai.update_ai_by_id_exposed(get_current_user, request.ai_id, request.title, request.description, request.output_type, request.is_private, db)
+    return ai.update_ai_by_id_exposed(get_current_user, request.ai_id, request.title, request.description, request.input_type, request.output_type, request.is_private, db)
 
 #create ai model
 @router.post('/admin', status_code = status.HTTP_201_CREATED, response_model=schemas.CreatedAI)
