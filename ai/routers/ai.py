@@ -62,7 +62,7 @@ def delete_ai(ai_id: str, db: Session = Depends(get_db), get_current_user: schem
 
 #delete ai model from database tables and filesystem
 @router.delete('/admin/{ai_id}', status_code = status.HTTP_200_OK)
-def delete_ai(ai_id: str, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+def delete_ai_admin(ai_id: str, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return ai.delete_admin(get_current_user, ai_id, db)
 
 #run a model by id
