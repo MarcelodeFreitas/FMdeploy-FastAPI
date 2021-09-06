@@ -28,12 +28,14 @@ def delete_model_files(ai_id: str, db: Session):
         return True
         """ raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"AI model with id number {ai_id} has no model files in database!") """
-    try:
-        modelfiles.delete(synchronize_session=False)
-        db.commit()
-    except:
+    """ try: """
+    for modelfile in modelfiles:
+        """ modelfile.delete(synchronize_session=False) """
+        db.delete(modelfile)
+    db.commit()
+    """ except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"AI model with id number {ai_id} error deleting from database!")
+         detail=f"AI model files with id number {ai_id} error deleting from database!") """
     return True
 
 async def create_input_file(db: Session, input_file: UploadFile = File(...)):
