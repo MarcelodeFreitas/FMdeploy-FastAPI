@@ -53,7 +53,7 @@ def user_owned_ai_list(current_user_email: str, db: Session):
     #check the user exists
     user_id = user.get_user_by_email(current_user_email, db).user_id
     #get entries where user is the owner from UserAIList
-    userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == True).outerjoin(models.AI).outerjoin(models.User).with_entities(models.AI.created_in, models.AI.title, models.AI.ai_id, models.User.name).all()
+    userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == True).outerjoin(models.AI).outerjoin(models.User).with_entities(models.AI.created_in, models.AI.title, models.AI.ai_id, models.AI.description, models.AI.input_type, models.AI.is_private, models.User.name).all()
     if not userai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"User id: {user_id}, does not own AI models in the database!")
