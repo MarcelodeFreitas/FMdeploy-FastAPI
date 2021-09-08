@@ -49,8 +49,11 @@ def get_public_by_title_exposed(title: str, db: Session):
     return ai
 
 def get_ai_by_id_exposed(user_email: str, ai_id: str, db: Session):
-    #check if user is admin
-    user.user_is_admin(user_email, db)
+    #check permissions
+    #check if owner or admin
+    if not ((user.is_admin_bool(user_email, db)) or (userai.is_owner_bool(user_email, ai_id, db))):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+         detail=f"User with email: {user_email} does not have permissions to update AI model id: {ai_id}!")
     #get ai by id
     ai = db.query(models.AI).filter(models.AI.ai_id == ai_id).first()
     if not ai:
