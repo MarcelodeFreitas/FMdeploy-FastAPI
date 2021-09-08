@@ -27,6 +27,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["content-disposition"]
 )
 
 #mount the static folder to get the brain logo in html
