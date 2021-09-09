@@ -53,7 +53,7 @@ def get_ai_by_id_exposed(user_email: str, ai_id: str, db: Session):
     #check if owner or admin
     if not ((user.is_admin_bool(user_email, db)) or (userai.is_owner_bool(user_email, ai_id, db))):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-         detail=f"User with email: {user_email} does not have permissions to update AI model id: {ai_id}!")
+         detail=f"User with email: {user_email} does not have permissions to see AI model id: {ai_id}!")
     #get ai by id
     ai = db.query(models.AI).filter(models.AI.ai_id == ai_id).first()
     if not ai:
@@ -66,6 +66,12 @@ def get_ai_by_title(title: str, db: Session):
     if not ai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with title: {title} was not found!")
     return ai
+
+""" def get_ai_by_title_exposed(user_email: str, title: str, db: Session):
+    ai = db.query(models.AI).filter(models.AI.title.like(f"%{title}%")).all()
+    if not ai:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with title: {title} was not found!")
+    return ai """
 
 def create_ai_entry(ai_id: str, request: schemas.CreateAI, db: Session):
     new_ai = models.AI(ai_id = ai_id, title=request.title, description=request.description, input_type=request.input_type, output_type=request.output_type, is_private=request.is_private, created_in=datetime.now())
