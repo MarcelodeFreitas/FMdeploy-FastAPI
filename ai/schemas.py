@@ -55,7 +55,7 @@ class UpdateAI(BaseModel):
     ai_id: str
     title:  Optional[str] = None
     description: Optional[str] = None
-    input_type: str
+    input_type: Optional[str] = None
     output_type:  Optional[str] = None
     is_private:  Optional[bool] = None
 
