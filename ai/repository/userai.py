@@ -117,9 +117,9 @@ def check_shared(user_id_beneficiary: int, ai_id: str, db: Session):
     entry = db.query(models.UserAIList).where(and_(models.UserAIList.fk_ai_id == ai_id, models.UserAIList.fk_user_id == user_id_beneficiary, models.UserAIList.beneficiary == True)).first()
     if not entry:
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"Ai model id: {ai_id} not shared with user id: {user_id_beneficiary}!")
+         detail=f"Ai model id: {ai_id} not shared with user!")
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"Ai model id: {ai_id} already shared with user id: {user_id_beneficiary}!")
+         detail=f"Ai model id: {ai_id} already shared with user!")
 
 def user_shared_ai_list(user_id: int, db: Session):
     #check the user exists
@@ -151,3 +151,16 @@ def create_ai_user_list_entry(user_id: str, ai_id: int, db: Session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"AI model with id number {ai_id} error creating AIUserList table entry!")
     return new_ai_user_list
+
+#get the list of user that a certain Ai model has been shared with
+def check_beneficiaries(ai_id: str, current_user_email: str, db: Session):
+    #check credentials
+    #check if owner or admin
+    if not ((user.is_admin_bool(current_user_email, db)) or (is_owner_bool(current_user_email, ai_id, db))):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+         detail=f"User with email: {current_user_email} does not have permissions to check beneficiaries of AI model id: {ai_id}!")
+    userai = db.query(models.UserAIList, models.User).where(models.UserAIList.fk_ai_id == ai_id).where(models.UserAIList.owner == False).outerjoin(models.User).with_entities(models.User.name, models.User.email).all()
+    if not userai:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"The AI Model id: {ai_id} has not been shared!")
+    return userai
