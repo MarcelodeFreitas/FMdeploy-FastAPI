@@ -73,8 +73,8 @@ def get_ai_by_title(title: str, db: Session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with title: {title} was not found!")
     return ai """
 
-def create_ai_entry(ai_id: str, request: schemas.CreateAI, db: Session):
-    new_ai = models.AI(ai_id = ai_id, title=request.title, description=request.description, input_type=request.input_type, output_type=request.output_type, is_private=request.is_private, created_in=datetime.now())
+def create_ai_entry(ai_id: str, author: str, request: schemas.CreateAI, db: Session):
+    new_ai = models.AI(ai_id = ai_id, author=author, title=request.title, description=request.description, input_type=request.input_type, output_type=request.output_type, is_private=request.is_private, created_in=datetime.now())
     try:
         db.add(new_ai)
         db.commit()
@@ -84,6 +84,7 @@ def create_ai_entry(ai_id: str, request: schemas.CreateAI, db: Session):
          detail=f"AI model with id number {ai_id} error creating AI table entry!")
     return new_ai
 
+#useless since create_ai_entry has been changed to add author when ai is created
 def create_ai_admin(user_email: str, request: schemas.CreateAI, db: Session):
     ai_id = str(uuid.uuid4().hex)
     #check admin
@@ -94,9 +95,9 @@ def create_ai_admin(user_email: str, request: schemas.CreateAI, db: Session):
     return {"ai_id": ai_id}
 
 def create_ai_current(request: schemas.CreateAI, user_email: str, db: Session):
-    ai_id = str(uuid.uuid4()).replace("-", "")
+    ai_id = str(uuid.uuid4().hex)
     user_object = user.get_user_by_email(user_email, db)
-    create_ai_entry(ai_id, request, db)
+    create_ai_entry(ai_id, user_object.name, request, db)
     userai.create_ai_user_list_entry(user_object.user_id, ai_id, db)
     return {"ai_id": ai_id}
 

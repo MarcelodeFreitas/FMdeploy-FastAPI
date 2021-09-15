@@ -27,6 +27,7 @@ class AI(Base):
     ai_id = Column(String, primary_key=True, index=True)
     userailist = relationship("UserAIList")
     ai_files = relationship("ModelFile")
+    author = Column(String, nullable=False)
     title = Column(String, nullable=False)
     description = Column(String, nullable=False)
     input_type = Column(String, nullable=False)
