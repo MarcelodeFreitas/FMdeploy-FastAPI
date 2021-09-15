@@ -146,6 +146,13 @@ class UserAI(BaseModel):
         orm_mode = True
 
 class ShareAI(BaseModel):
+    beneficiary_email: str
+    ai_id: str
+
+    class Config():
+        orm_mode = True
+
+class AdminShareAI(BaseModel):
     user_id_sharer: int
     user_id_beneficiary: int
     ai_id: str
