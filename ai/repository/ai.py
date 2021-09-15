@@ -85,7 +85,7 @@ def create_ai_entry(ai_id: str, request: schemas.CreateAI, db: Session):
     return new_ai
 
 def create_ai_admin(user_email: str, request: schemas.CreateAI, db: Session):
-    ai_id = str(uuid.uuid4()).replace("-", "")
+    ai_id = str(uuid.uuid4().hex)
     #check admin
     user.user_is_admin(user_email, db)
     user.get_user_by_id(request.user_id, db)
