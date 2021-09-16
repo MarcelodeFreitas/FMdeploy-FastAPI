@@ -38,7 +38,9 @@ def is_owner_bool(user_email: str, ai_id: str, db):
     return entry.owner
 
 def delete(user_id: int, ai_id: str, db: Session):
-    entry = db.query(models.UserAIList).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.fk_ai_id == ai_id)
+    # entry = db.query(models.UserAIList).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.fk_ai_id == ai_id)
+    # ajusted to delete the entry that identifies shared models, models that are deleted cant remain shared
+    entry = db.query(models.UserAIList).where(models.UserAIList.fk_ai_id == ai_id)
     if not entry.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User id: {user_id}, ai model id: {ai_id} not found in database!")
     try:
@@ -135,7 +137,7 @@ def user_shared_ai_list_exposed(current_user_email: str, db: Session):
     #check the user exists
     user_id = user.get_user_by_email(current_user_email, db).user_id
     #get entries where user is the beneficiary from UserAIList
-    userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.beneficiary == True).outerjoin(models.AI).outerjoin(models.User).with_entities(models.AI.created_in, models.AI.author, models.AI.title, models.AI.ai_id, models.AI.description, models.AI.input_type, models.AI.output_type, models.AI.is_private, models.User.name).all()
+    userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.beneficiary == True).outerjoin(models.AI).outerjoin(models.User).with_entities(models.AI.created_in, models.AI.author, models.AI.title, models.AI.ai_id, models.AI.description, models.AI.input_type, models.AI.output_type, models.AI.is_private).all()
     if not userai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"User: {current_user_email}, does not have shared AI models in the database!")
