@@ -19,6 +19,7 @@ class AI(BaseModel):
 
 class ShowAI(BaseModel):
     ai_id: str
+    author: str
     title: str
     description: Optional[str] = None
     input_type: str
