@@ -58,7 +58,7 @@ def user_owned_ai_list(current_user_email: str, db: Session):
     userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == True).outerjoin(models.AI).outerjoin(models.User).with_entities(models.AI.created_in, models.AI.author, models.AI.title, models.AI.ai_id, models.AI.description, models.AI.input_type, models.AI.output_type, models.AI.is_private, models.User.name).all()
     if not userai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"User id: {user_id}, does not own AI models in the database!")
+         detail=f"User {current_user_email}, does not own any AI models!")
     return userai
 
 def user_share_ai(user_id_sharer: int, user_id_beneficiary: int, ai_id: str, db: Session):
@@ -140,7 +140,7 @@ def user_shared_ai_list_exposed(current_user_email: str, db: Session):
     userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.beneficiary == True).outerjoin(models.AI).outerjoin(models.User).with_entities(models.AI.created_in, models.AI.author, models.AI.title, models.AI.ai_id, models.AI.description, models.AI.input_type, models.AI.output_type, models.AI.is_private).all()
     if not userai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"User: {current_user_email}, does not have shared AI models in the database!")
+         detail=f"User {current_user_email}, does not have any shared AI models!")
     return userai
 
 def create_ai_user_list_entry(user_id: str, ai_id: int, db: Session):
