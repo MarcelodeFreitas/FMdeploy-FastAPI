@@ -115,13 +115,48 @@ def user_share_ai_exposed(current_user_email: str, beneficiary_email: str, ai_id
          detail=f"AI model id: {ai_id}, sharer: {current_user_email}, user beneficiary: {beneficiary_email} error sharing AI model!")
     return f"AI model id:  {ai_id}, shared with {beneficiary_email}"
 
+def user_cancel_share_ai(current_user_email: str, beneficiary_email: str, ai_id: str, db: Session):
+    #check the ai model exists
+    ai_object = ai.get_ai_by_id(ai_id, db)
+    if not (ai_object.is_private):
+       raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"This AI model is already public") 
+    #check permissions
+    #check if owner or admin
+    if not ((user.is_admin_bool(current_user_email, db)) or (userai.is_owner_bool(current_user_email, ai_id, db))):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+         detail=f"User with email: {current_user_email} does not have permissions to share AI model id: {ai_id}!")
+    #check the user exists
+    user_id_sharer = user.get_user_by_email(current_user_email, db).user_id
+    #check user beneficiary exists
+    user_id_beneficiary = user.get_user_by_email(beneficiary_email, db).user_id
+    #check if it is shared with this user
+    userai_entry = check_shared_entry(user_id_beneficiary, ai_id, db)
+    #deleting entry from userai list
+    try:
+        userai_entry.delete(synchronize_session=False)
+        db.commit()
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model id: {ai_id}, sharer: {current_user_email}, user beneficiary: {beneficiary_email} error canceling share AI model!")
+    return f"AI model id:  {ai_id}, not shared with {beneficiary_email}"
+
 def check_shared(user_id_beneficiary: int, ai_id: str, db: Session):
-    entry = db.query(models.UserAIList).where(and_(models.UserAIList.fk_ai_id == ai_id, models.UserAIList.fk_user_id == user_id_beneficiary, models.UserAIList.beneficiary == True)).first()
+    entry = db.query(models.UserAIList).where(and_(models.UserAIList.fk_ai_id == ai_id, models.UserAIList.fk_user_id == user_id_beneficiary, models.UserAIList.owner == False)).first()
     if not entry:
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"Ai model id: {ai_id} not shared with user!")
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"Ai model id: {ai_id} already shared with user!")
+
+def check_shared_entry(user_id_beneficiary: int, ai_id: str, db: Session):
+    print(user_id_beneficiary)
+    entry = db.query(models.UserAIList).where(and_(models.UserAIList.fk_ai_id == ai_id, models.UserAIList.fk_user_id == user_id_beneficiary, models.UserAIList.owner == False))
+    if not entry.first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"Ai model id: {ai_id} not shared with user {user_id_beneficiary}!")
+    else:
+        return entry
 
 def user_shared_ai_list(user_id: int, db: Session):
     #check the user exists

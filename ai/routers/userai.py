@@ -31,6 +31,10 @@ def get_list_of_AImodels_owned_by_user(db: Session = Depends(get_db), get_curren
 def share_AImodel(request: schemas.ShareAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return userai.user_share_ai_exposed(get_current_user, request.beneficiary_email, request.ai_id, db)
 
+@router.post("/cancel_share", status_code = status.HTTP_200_OK)
+def stop_share_AImodel(request: schemas.ShareAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return userai.user_cancel_share_ai(get_current_user, request.beneficiary_email, request.ai_id, db)
+
 @router.post("/is_shared", status_code = status.HTTP_200_OK)
 def check_if_AImodel_is_shared_with_user(request: schemas.UserAI, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return userai.check_shared(request.user_id, request.ai_id, db)
