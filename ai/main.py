@@ -70,7 +70,7 @@ async def main():
     content = """
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            a.button{background-color: #2ABF9F;
+            a.button{background-color: #0385B0;
                     border: none;
                     color: white;
                     padding: 1.1em 2.1em 1.1em;
@@ -86,7 +86,7 @@ async def main():
                     border-radius: 5px;
                     width: 25%}
             .button:hover {
-                color: #2ABF9F;
+                color: #0385B0;
                 background-color: white;
             }
         </style> 
@@ -100,8 +100,8 @@ async def main():
             <div style="margin-right: 10%;
             margin-left: 10%;">
                 <div style="margin-bottom: 10%; ">
-                    <h1 style="color: #2ABF9F; margin-bottom: 10%; font-size: 2.6vw">Welcome to FMdeploy API !</h1>
-                    <p style="color:white; font-size: 16px">Developed with <a href="https://fastapi.tiangolo.com/" target="_blank" style="color: #2ABF9F">Fast API</a>. To check the documentation please use one of the links bellow:</p>
+                    <h1 style="color: #0385B0; margin-bottom: 10%; font-size: 2.6vw">Welcome to FMdeploy API !</h1>
+                    <p style="color:white; font-size: 16px">Developed with <a href="https://fastapi.tiangolo.com/" target="_blank" style="color: #0385B0">Fast API</a>. To check the documentation please use one of the links bellow:</p>
                 </div>
                 <a class="button" href="/docs" target="_blank">
                     Docs Swagger UI
@@ -115,7 +115,7 @@ async def main():
             right: 0;
             width: 50%;
             height: 100%;
-            background-color: #2ABF9F;
+            background-color: #0385B0;
             padding-top: 27vh
             ">
                 <center>
