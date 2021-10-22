@@ -6,6 +6,8 @@ import uuid
 import os
 import shutil
 from . import user, userai
+import sys
+import importlib
 
 def check_model_files(ai_id: str, db: Session):
     modelfiles = db.query(models.ModelFile).where(models.ModelFile.fk_ai_id == ai_id).all()
@@ -75,7 +77,7 @@ def check_input_file(input_file_id: str, db: Session):
         detail=f"Input file with id number: {input_file_id}, path: {input_file.path}, does not exist in the filesystem !")
     return inputfile_name_path
 
-async def create_pythonscript(current_user_email: str, ai_id: str, db: Session, python_file: UploadFile = File(...)):
+async def create_python_script(current_user_email: str, ai_id: str, db: Session, python_file: UploadFile = File(...)):
     #check permissions
     #check if owner or admin
     if not ((user.is_admin_bool(current_user_email, db)) or (userai.is_owner_bool(current_user_email, ai_id, db))):
@@ -98,15 +100,36 @@ async def create_pythonscript(current_user_email: str, ai_id: str, db: Session, 
         db.commit()
     except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {ai_id} database update error!")
-    #try to write python script top filesystem
+    #try to write python script to filesystem
     try:
         os.makedirs("./modelfiles/" + ai_id, exist_ok=True)
         with open(f"{file_path}", "wb") as buffer:
             shutil.copyfileobj(python_file.file, buffer)  
     except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {file_name} filesystem write error!")
+    #check if the python script saved is valid
+    validate_python_script(ai_id, file_name)
 
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"The file named {file_name} was successfully submited to model id number {ai_id}.")
+
+def validate_python_script(ai_id: str, script_name: str):
+    path = "./modelfiles/" + ai_id
+    print("file_name: ", script_name)
+    script_name_without_extension = script_name[0:-3]
+    # add folder path to sys
+    sys.path.append(path)
+    # import the module
+    script = importlib.import_module(script_name_without_extension)
+    #check if a name is in a module
+    print('test1:', 'load_models' in dir(script))
+    print('test2:', 'run' in dir(script))
+    if ('load_models' in dir(script)) and ('run' in dir(script)):
+        print('trueee')
+        return True
+    else: 
+        print('falseee')
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {script_name} is missing the functions 'load_models', 'run' or both!")
+        
 
 async def create_model_files(current_user_email: str, ai_id: str, db: Session, model_files: List[UploadFile] = File(...)):
     #check permissions

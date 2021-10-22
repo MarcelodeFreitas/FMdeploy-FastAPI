@@ -20,7 +20,7 @@ async def create_input_file(input_file: UploadFile = File(...), db: Session = De
 #upload python script
 @router.post("/pythonscript/{ai_id}")
 async def create_script_file(ai_id: str, python_file: UploadFile = File(...), db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return await files.create_pythonscript(get_current_user, ai_id, db, python_file)
+    return await files.create_python_script(get_current_user, ai_id, db, python_file)
 
 #upload model files 
 @router.post("/modelfiles/{ai_id}")
