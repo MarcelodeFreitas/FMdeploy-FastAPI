@@ -10,6 +10,7 @@ import sys
 import os
 import shutil
 from datetime import datetime
+import logging
 
 def get_all(db: Session):
     ai_list = db.query(models.AI).all()
@@ -168,14 +169,27 @@ async def run_ai(current_user_email: str, ai_id: str, input_file_id: str, db: Se
     #check if the table modelfile has files associated with this ai model
     #check if those files exist in the file system
     model_files = files.check_model_files(ai_id, db)
-    # run the ai model
-    output_file_path = run_script(ai_id, python_file, model_files, input_file)
-    #check if result file exists
-    if not os.path.isfile(output_file_path):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"There is no output file at: {output_file_path}!")
+    try:
+        # run the ai model
+        output_file_path = run_script(ai_id, python_file, model_files, input_file)
+        #check if result file exists
+        if not os.path.isfile(output_file_path):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+            detail="There is no output file!")
+        
+        return FileResponse(output_file_path, media_type="application/gzip", filename="result_" + input_file.name)
+    except:
+        error = logging.exception("run_script error: ")
+        print(error)
+        """ raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"Script error") """
+        log_path = "./outputfiles/" + input_file.input_file_id + "/" + python_file.python_script_name[0:-3] + ".log"
+        if not os.path.isfile(log_path):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+            detail="There is no error log file!")
+        return FileResponse(log_path, media_type="text/plain", filename=python_file.python_script_name[0:-3] + "_error_log")
+         
     
-    return FileResponse(output_file_path, media_type="application/gzip", filename="result_" + input_file.name)
 
 def check_python_files(ai_id: str, db: Session):
     ai = db.query(models.AI).filter(models.AI.ai_id == ai_id).first()
@@ -210,8 +224,18 @@ def run_script( ai_id: str, python_file: dict, model_files: dict, input_file: di
     # import the module
     script = importlib.import_module(python_script_name)
     # run "load_models" and "run"
-    script.load_models(model_files)
-    script.run(input_file_path, output_file_name, output_directory_path)
+    try:
+        logname = output_directory_path + python_script_name + ".log"
+        print(logname)
+        logging.basicConfig(filename=logname,
+                            format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                            datefmt='%H:%M:%S',
+                            level=logging.DEBUG)
+        print("LOAD MODELS:", script.load_models(model_files))
+        print("RUN:", script.run(input_file_path, output_file_name, output_directory_path))
+    except:
+        error = logging.exception("run_script errors:")
+        print(error)
 
     return output_directory_path + output_file_name
 
