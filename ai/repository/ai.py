@@ -155,7 +155,8 @@ async def run_ai(current_user_email: str, ai_id: str, input_file_id: str, db: Se
     #check if the user id provided exists
     user_id = user.get_user_by_email(current_user_email, db).user_id
     #check if the ai id provided exists
-    get_ai_by_id(ai_id, db)
+    model = get_ai_by_id(ai_id, db)
+    print("hereeeee:" + model.input_type + model.output_type)
     #check if the ai model is public
     if not check_public_by_id(ai_id, db):
         #check if the user has access to this ai model
@@ -163,6 +164,7 @@ async def run_ai(current_user_email: str, ai_id: str, input_file_id: str, db: Se
         userai.check_access_ai_exception(user_id, ai_id, db)
     #check if input file exists
     input_file = files.check_input_file(input_file_id, db)
+    input_file_name_no_extension = input_file.name.split(".")[0]
     #check if the ai table has python script paths
     #check that the python script files exist in the filesystem
     python_file = check_python_files(ai_id, db)
@@ -173,11 +175,17 @@ async def run_ai(current_user_email: str, ai_id: str, input_file_id: str, db: Se
         # run the ai model
         output_file_path = run_script(ai_id, python_file, model_files, input_file)
         #check if result file exists
-        if not os.path.isfile(output_file_path):
+        print("output file path hereeee:" + output_file_path + model.output_type)
+        if not os.path.isfile(output_file_path + model.output_type):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
             detail="There is no output file!")
         
-        return FileResponse(output_file_path, media_type="application/gzip", filename="result_" + input_file.name)
+        if (model.output_type == ".nii.gz"):
+            return FileResponse(output_file_path + model.output_type, media_type="application/gzip", filename="result_" + input_file_name_no_extension + model.output_type)
+        elif (model.output_type == ".csv"):
+            return FileResponse(output_file_path + model.output_type, media_type="text/csv", filename="result_" + input_file_name_no_extension + model.output_type)
+        elif (model.output_type == ".png"):
+            return FileResponse(output_file_path + model.output_type, media_type="image/png", filename="result_" + input_file_name_no_extension + model.output_type)
     except:
         error = logging.exception("run_script error: ")
         print(error)
@@ -205,12 +213,15 @@ def check_python_files(ai_id: str, db: Session):
 def run_script( ai_id: str, python_file: dict, model_files: dict, input_file: dict):
     python_script_name = python_file.python_script_name[0:-3]
     input_file_name = input_file.name
+    input_file_name_no_extension = input_file_name.split(".")[0]
+    print("input_file_name_no_extension: ", input_file_name_no_extension)
     input_file_path = input_file.path
     # make output directory
     os.makedirs("./outputfiles/" + input_file.input_file_id, exist_ok=True)
 
     output_directory_path = "./outputfiles/" + input_file.input_file_id + "/"
-    output_file_name = "result_" + input_file_name
+    output_file_name = "result_" + input_file_name_no_extension
+    print("output_file_name: ", output_file_name)
     path = "./modelfiles/" + ai_id
 
     #python_script_name = db.query(models.AI).where(models.AI.ai_id == ai_id).first().python_script_name[0:-3]
