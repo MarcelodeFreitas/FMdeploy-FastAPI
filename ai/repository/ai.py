@@ -190,7 +190,6 @@ async def run_ai(current_user_email: str, ai_id: str, input_file_id: str, db: Se
         return FileResponse(log_path, media_type="text/plain", filename=python_file.python_script_name[0:-3] + "_error_log")
          
     
-
 def check_python_files(ai_id: str, db: Session):
     ai = db.query(models.AI).filter(models.AI.ai_id == ai_id).first()
     name_path = db.query(models.AI).filter(models.AI.ai_id == ai_id).with_entities(models.AI.python_script_name, models.AI.python_script_path).first()
