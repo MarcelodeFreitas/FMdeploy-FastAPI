@@ -13,6 +13,11 @@ from . import hashing
 from sqlalchemy.orm import Session
 from sqlalchemy.event import listen
 
+from fastapi_utils.tasks import repeat_every
+import os
+import time
+import shutil
+
 app = FastAPI()
 
 #CORS
@@ -64,6 +69,45 @@ async def insert_initial_values(db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
     print("doooooone") """
+
+#delete files that haven't been accessed in 24h, checked every 24h since server start
+@app.on_event("startup")
+@repeat_every(seconds = 60 * 24 * 60) #repeat every hour
+async def file_cleanup():
+    print("Cleaning old files...")
+    path1 = ".\inputfiles"
+    path2 = ".\outputfiles"
+    max_access_time = 60 * 24 * 60
+    present_time=time.time()
+    if os.path.exists(path1):
+        for (roots, dirs, files) in os.walk(path1):
+            for f in files:
+                fil=os.path.join(roots,f)
+                fil_stat=os.stat(fil)
+                last_access_time=fil_stat.st_atime
+                if last_access_time < present_time-max_access_time:
+                    fil_split = fil.split("\\")
+                    dir_path = fil_split[0] + "\\" + fil_split[1] + "\\" + fil_split[2]
+                    print(dir_path)
+                    print("FILE PATH: ", fil, "\\ LAST ACCESS TIME: ", time.ctime(last_access_time), "\\ DELETE TIME: ", time.ctime(present_time))
+                    print("DELETING DIRECTORY: ", dir_path)
+                    shutil.rmtree(dir_path)
+    if os.path.exists(path2):
+        for (roots, dirs, files) in os.walk(path2):
+            for f in files:
+                fil=os.path.join(roots,f)
+                fil_stat=os.stat(fil)
+                last_access_time=fil_stat.st_atime
+                """ print(fil, time.ctime(last_access_time)) """
+                if last_access_time < present_time-max_access_time:
+                    fil_split = fil.split("\\")
+                    dir_path = fil_split[0] + "\\" + fil_split[1] + "\\" + fil_split[2]
+                    print(dir_path)
+                    print("FILE PATH: ", fil, "\\ LAST ACCESS TIME: ", time.ctime(last_access_time), "\\ DELETE TIME: ", time.ctime(present_time))
+                    print("DELETING DIRECTORY: ", dir_path)
+                    shutil.rmtree(dir_path)
+            
+    
 
 @app.get("/")
 async def main():

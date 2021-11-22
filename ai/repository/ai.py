@@ -179,13 +179,23 @@ async def run_ai(current_user_email: str, ai_id: str, input_file_id: str, db: Se
         if not os.path.isfile(output_file_path + model.output_type):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
             detail="There is no output file!")
-        
-        if (model.output_type == ".nii.gz"):
-            return FileResponse(output_file_path + model.output_type, media_type="application/gzip", filename="result_" + input_file_name_no_extension + model.output_type)
-        elif (model.output_type == ".csv"):
-            return FileResponse(output_file_path + model.output_type, media_type="text/csv", filename="result_" + input_file_name_no_extension + model.output_type)
-        elif (model.output_type == ".png"):
-            return FileResponse(output_file_path + model.output_type, media_type="image/png", filename="result_" + input_file_name_no_extension + model.output_type)
+        try:
+            if (model.output_type == ".nii.gz"):
+                return FileResponse(output_file_path + model.output_type, media_type="application/gzip", filename="result_" + input_file_name_no_extension + model.output_type)
+            elif (model.output_type == ".csv"):
+                return FileResponse(output_file_path + model.output_type, media_type="text/csv", filename="result_" + input_file_name_no_extension + model.output_type)
+            elif (model.output_type == ".png"):
+                return FileResponse(output_file_path + model.output_type, media_type="image/png", filename="result_" + input_file_name_no_extension + model.output_type)
+        finally:
+            input_directory_path = input_file.path.replace(input_file.name,"")
+            output_directory_path = "./outputfiles/" + input_file.input_file_id + "/"
+            #delete input files and output files after fileresponse
+            print("INPUT FILE PATH: ", input_directory_path, "OUTPUT DIRECTORY: ", output_directory_path)
+            """ if os.path.exists(input_directory_path):
+                shutil.rmtree(input_directory_path)
+            if os.path.exists(output_directory_path):
+                shutil.rmtree(output_directory_path) """
+            
     except:
         error = logging.exception("run_script error: ")
         print(error)
@@ -216,6 +226,7 @@ def run_script( ai_id: str, python_file: dict, model_files: dict, input_file: di
     input_file_name_no_extension = input_file_name.split(".")[0]
     print("input_file_name_no_extension: ", input_file_name_no_extension)
     input_file_path = input_file.path
+    input_directory_path = input_file_path.replace(input_file_name,"")
     # make output directory
     os.makedirs("./outputfiles/" + input_file.input_file_id, exist_ok=True)
 
@@ -243,6 +254,13 @@ def run_script( ai_id: str, python_file: dict, model_files: dict, input_file: di
                             level=logging.DEBUG)
         print("LOAD MODELS:", script.load_models(model_files))
         print("RUN:", script.run(input_file_path, output_file_name, output_directory_path))
+        """ print("INPUT FILE PATH: ", input_directory_path, "OUTPUT DIRECTORY: ", output_directory_path) """
+        """ #delete input files and output files
+        if os.path.exists(input_directory_path):
+            shutil.rmtree(input_directory_path)
+        if os.path.exists(output_directory_path):
+            shutil.rmtree(output_directory_path) """
+        
     except:
         error = logging.exception("run_script errors:")
         print(error)
