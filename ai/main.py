@@ -68,6 +68,10 @@ async def insert_initial_values(db: Session = Depends(get_db)):
 @app.get("/")
 async def main():
     content = """
+        <head>
+            <link rel="icon" href="static/favicon.ico" />
+            <title>FMdeploy API</title>
+        </head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             a.button{background-color: #0385B0;
