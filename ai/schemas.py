@@ -119,7 +119,6 @@ class UserAIList(BaseModel):
     fk_user_id: int
     fk_ai_id: str
     owner: bool
-    beneficiary: bool
     
     class Config():
         orm_mode = True

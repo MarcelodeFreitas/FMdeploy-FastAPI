@@ -73,7 +73,7 @@ def user_share_ai(user_id_sharer: int, user_id_beneficiary: int, ai_id: str, db:
     #check if it is already shared with this user
     check_shared(user_id_beneficiary, ai_id, db)
     #create UserAi List table entry where owner=false and beneficiary=true
-    new_ai_user_list = models.UserAIList(fk_user_id=user_id_beneficiary, fk_ai_id=ai_id,owner=False, beneficiary=True)
+    new_ai_user_list = models.UserAIList(fk_user_id=user_id_beneficiary, fk_ai_id=ai_id,owner=False)
     try:
         db.add(new_ai_user_list)
         db.commit()
@@ -105,7 +105,7 @@ def user_share_ai_exposed(current_user_email: str, beneficiary_email: str, ai_id
     #check if it is already shared with this user
     check_shared(user_id_beneficiary, ai_id, db)
     #create UserAi List table entry where owner=false and beneficiary=true
-    new_ai_user_list = models.UserAIList(fk_user_id=user_id_beneficiary, fk_ai_id=ai_id,owner=False, beneficiary=True)
+    new_ai_user_list = models.UserAIList(fk_user_id=user_id_beneficiary, fk_ai_id=ai_id,owner=False)
     try:
         db.add(new_ai_user_list)
         db.commit()
@@ -162,7 +162,7 @@ def user_shared_ai_list(user_id: int, db: Session):
     #check the user exists
     user.get_user_by_id(user_id, db)
     #get entries where user is the owner from UserAIList
-    userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.beneficiary == True).outerjoin(models.AI).outerjoin(models.User).all()
+    userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == False).outerjoin(models.AI).outerjoin(models.User).all()
     if not userai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"User id: {user_id}, does have shared AI models in the database!")
@@ -172,14 +172,14 @@ def user_shared_ai_list_exposed(current_user_email: str, db: Session):
     #check the user exists
     user_id = user.get_user_by_email(current_user_email, db).user_id
     #get entries where user is the beneficiary from UserAIList
-    userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.beneficiary == True).outerjoin(models.AI).outerjoin(models.User).with_entities(models.AI.created_in, models.AI.author, models.AI.title, models.AI.ai_id, models.AI.description, models.AI.input_type, models.AI.output_type, models.AI.is_private).all()
+    userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == False).outerjoin(models.AI).outerjoin(models.User).with_entities(models.AI.created_in, models.AI.author, models.AI.title, models.AI.ai_id, models.AI.description, models.AI.input_type, models.AI.output_type, models.AI.is_private).all()
     if not userai:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"User {current_user_email}, does not have any shared AI models!")
     return userai
 
 def create_ai_user_list_entry(user_id: str, ai_id: int, db: Session):
-    new_ai_user_list = models.UserAIList(fk_user_id=user_id, fk_ai_id=ai_id,owner=True, beneficiary=False)
+    new_ai_user_list = models.UserAIList(fk_user_id=user_id, fk_ai_id=ai_id,owner=True)
     try:
         db.add(new_ai_user_list)
         db.commit()
