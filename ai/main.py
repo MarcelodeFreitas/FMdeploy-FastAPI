@@ -75,8 +75,8 @@ async def insert_initial_values(db: Session = Depends(get_db)):
 @repeat_every(seconds = 60 * 24 * 60) #repeat every hour
 async def file_cleanup():
     print("Cleaning old files...")
-    path1 = "./inputfiles"
-    path2 = "./outputfiles"
+    path1 = ".\inputfiles"
+    path2 = ".\outputfiles"
     max_access_time = 60 * 24 * 60
     present_time=time.time()
     if os.path.exists(path1):
@@ -86,10 +86,10 @@ async def file_cleanup():
                 fil_stat=os.stat(fil)
                 last_access_time=fil_stat.st_atime
                 if last_access_time < present_time-max_access_time:
-                    fil_split = fil.split("//")
-                    dir_path = fil_split[0] + "//" + fil_split[1] + "//" + fil_split[2]
+                    fil_split = fil.split("\\")
+                    dir_path = fil_split[0] + "\\" + fil_split[1] + "\\" + fil_split[2]
                     print(dir_path)
-                    print("FILE PATH: ", fil, "// LAST ACCESS TIME: ", time.ctime(last_access_time), "// DELETE TIME: ", time.ctime(present_time))
+                    print("FILE PATH: ", fil, "\\ LAST ACCESS TIME: ", time.ctime(last_access_time), "\\ DELETE TIME: ", time.ctime(present_time))
                     print("DELETING DIRECTORY: ", dir_path)
                     shutil.rmtree(dir_path)
     if os.path.exists(path2):
@@ -100,10 +100,10 @@ async def file_cleanup():
                 last_access_time=fil_stat.st_atime
                 """ print(fil, time.ctime(last_access_time)) """
                 if last_access_time < present_time-max_access_time:
-                    fil_split = fil.split("//")
-                    dir_path = fil_split[0] + "//" + fil_split[1] + "//" + fil_split[2]
+                    fil_split = fil.split("\\")
+                    dir_path = fil_split[0] + "\\" + fil_split[1] + "\\" + fil_split[2]
                     print(dir_path)
-                    print("FILE PATH: ", fil, "// LAST ACCESS TIME: ", time.ctime(last_access_time), "// DELETE TIME: ", time.ctime(present_time))
+                    print("FILE PATH: ", fil, "\\ LAST ACCESS TIME: ", time.ctime(last_access_time), "\\ DELETE TIME: ", time.ctime(present_time))
                     print("DELETING DIRECTORY: ", dir_path)
                     shutil.rmtree(dir_path)
             
