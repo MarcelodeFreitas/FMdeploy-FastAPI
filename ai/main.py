@@ -72,13 +72,13 @@ async def insert_initial_values(db: Session = Depends(get_db)):
 
 #delete files that haven't been accessed in 24h, checked every 24h since server start
 @app.on_event("startup")
-@repeat_every(seconds = 60) #repeat every hour
+@repeat_every(seconds = 60 * 24 * 60) #repeat every hour
 async def file_cleanup():
     try: 
         print("Cleaning old files...")
         path1 = ".\inputfiles"
         path2 = ".\outputfiles"
-        max_access_time = 60
+        max_access_time = 60 * 24 * 60
         present_time=time.time()
         if os.path.exists(path1):
             for (roots, dirs, files) in os.walk(path1):
