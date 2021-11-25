@@ -1,12 +1,11 @@
 FROM python:3.7.7
 
-COPY ./ai /app/src
-COPY ./requirements.txt /app
+WORKDIR /code
 
-WORKDIR /app/src
+COPY ./requirements.txt /code/requirements.txt
 
-RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-EXPOSE 8000
+COPY ./app /code/app
 
-CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker src.main:app"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

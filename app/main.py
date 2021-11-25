@@ -35,8 +35,10 @@ app.add_middleware(
     expose_headers=["content-disposition"]
 )
 
+print(os.getcwd())
+
 #mount the static folder to get the brain logo in html
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 #when we run the server migrate all the models to the database
 #if the table exists nothing happens
