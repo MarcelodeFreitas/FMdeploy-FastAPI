@@ -22,7 +22,7 @@ def get_all_users(db: Session = Depends(get_db), get_current_user: schemas.User 
     return user.get_all_users(get_current_user, db)
 
 #create user
-@router.post('/', status_code = status.HTTP_201_CREATED, response_model=schemas.ShowUser)
+@router.post('', status_code = status.HTTP_201_CREATED, response_model=schemas.ShowUser)
 def create_user(request: schemas.CreateUser, db: Session = Depends(get_db)):
     return user.create_user(request.name, request.email, request.password, db)
 
@@ -43,7 +43,7 @@ def get_current_user(db: Session = Depends(get_db), get_current_user: schemas.Us
 
 #update current user
 #dont forget to require new login
-@router.put('/', status_code = status.HTTP_202_ACCEPTED)
+@router.put('', status_code = status.HTTP_202_ACCEPTED)
 def update_current_user(request: schemas.UpdateUser, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return user.update_user_by_email(get_current_user, request.new_name, request.new_email, db)
 
