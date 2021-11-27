@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from .. import models, hashing
+from . import ai
 
 def get_user_by_id_exposed(user_email: str, user_id: int, db: Session):
     #check if admin
@@ -89,7 +90,7 @@ def get_user_query_by_email(user_email: str, db: Session):
          detail=f"User with email: {user_email} was not found!")
     return user
 
-def delete_user_by_id(user_email: str, user_id: int, db: Session):
+def delete_user_by_id_admin(user_email: str, user_id: int, db: Session):
     #check if admin
     user_is_admin(user_email, db)
     #check if user exists
@@ -103,7 +104,50 @@ def delete_user_by_id(user_email: str, user_id: int, db: Session):
          detail=f"Error deleting user with id: {user_id} from database!")
     return HTTPException(status_code=status.HTTP_200_OK, 
     detail=f"User with id: {user_id} was successfully deleted.")
+    
+def delete_user_by_id(user_id: int, db: Session):
+    #check if user exists
+    user = get_user_query_by_id(user_id, db)
+    #delete user
+    try:
+        user.delete(synchronize_session=False)
+        db.commit()
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"Error deleting user with id: {user_id} from database!")
+    return HTTPException(status_code=status.HTTP_200_OK, 
+    detail=f"User with id: {user_id} was successfully deleted.")
+    
+def delete_user_by_email(user_email: str, db: Session):
+    #check if user exists
+    user = get_user_query_by_email(user_email, db)
+    #delete user
+    try:
+        user.delete(synchronize_session=False)
+        db.commit()
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"Error deleting user with email: {user_email} from database!")
+    return HTTPException(status_code=status.HTTP_200_OK, 
+    detail=f"User with id: {user_email} was successfully deleted.")
 
+#delete current user and all models
+def delete_current_user(current_user_email: str, db: Session):
+    #check if user exists
+    user = get_user_by_email(current_user_email, db)
+    user_id = user.user_id
+    """ try: """
+    #list ai
+    ai_list = db.query(models.UserAIList).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == True).all()
+    #delete all ai models owned by the user
+    if len(ai_list) > 0:
+        for ai_model in ai_list:
+            ai.delete(current_user_email, ai_model.fk_ai_id, db)
+    #delete user
+    delete_user_by_email(current_user_email, db)
+    return HTTPException(status_code=status.HTTP_200_OK, 
+    detail=f"User account successfuly deleted!")
+    
 def update_user_by_id(user_id: int, user_email: str, user_name: str, db: Session):
     #check if user exists
     user = get_user_query_by_id(user_id, db)
