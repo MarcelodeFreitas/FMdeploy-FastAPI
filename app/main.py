@@ -6,13 +6,6 @@ from .database import engine
 from .routers import user, ai, userai, authentication, files
 from fastapi.middleware.cors import CORSMiddleware
 
-from sqlalchemy import event, DDL
-from .models import User
-from .database import get_db
-from . import hashing
-from sqlalchemy.orm import Session
-from sqlalchemy.event import listen
-
 from fastapi_utils.tasks import repeat_every
 import os
 import time
@@ -58,19 +51,6 @@ app.include_router(user.router)
 app.include_router(ai.router)
 app.include_router(files.router)
 app.include_router(userai.router)
-
-#attemt to insert an admin after table user is created
-#unsuccessfull
-event.listen(User.__table__, 'after_create',
-            DDL(""" INSERT INTO user (name, admin, password, is_admin) VALUES ('admin', 'admin@gmail.com', 'jHCX9BxnNJQXS2J', TRUE) """))
-
-""" @event.listens_for(User.__table__, 'after_create')
-async def insert_initial_values(db: Session = Depends(get_db)):
-    new_user = User(name="admin", email="admin@gmail.com", password=hashing.Hash.bcrypt("jHCX9BxnNJQXS2J"), is_admin=True)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    print("doooooone") """
 
 #delete files that haven't been accessed in 24h, checked every 24h since server start
 @app.on_event("startup")
