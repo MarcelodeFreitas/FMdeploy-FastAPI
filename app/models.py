@@ -16,7 +16,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False, nullable=True)
     
 event.listen(User.__table__, 'after_create',
-            DDL(" INSERT INTO user (name, email, password, is_admin) VALUES ('admin', 'admin@gmail.com', 'jHCX9BxnNJQXS2J', TRUE) "))
+            DDL(" INSERT INTO user (name, email, password, is_admin) VALUES ('admin', 'fmdeploy@gmail.com', '$2b$12$cm7LbkGUMSzbWe9fAdCXJO/lzivm49UHi4aEGR21bpbQ5aX6a4hdS', TRUE) "))
     
 class UserAIList(Base):
     __tablename__ = 'userailist'
