@@ -24,6 +24,13 @@ def check_model_files(ai_id: str, db: Session):
             detail=f"AI model with id number: {ai_id}, path: {modelfile.path}, does not exist in the filesystem !")
     return modelfiles_name_path
 
+def check_model_files_bool(ai_id: str, db: Session):
+    modelfiles = db.query(models.ModelFile).where(models.ModelFile.fk_ai_id == ai_id).all()
+    if modelfiles:
+        return True
+    else:
+        return False
+
 def delete_model_files(ai_id: str, db: Session):
     modelfiles = db.query(models.ModelFile).where(models.ModelFile.fk_ai_id == ai_id).all()
     if not modelfiles:
@@ -123,12 +130,14 @@ def validate_python_script(ai_id: str, script_name: str):
     #check if a name is in a module
     print('test1:', 'load_models' in dir(script))
     print('test2:', 'run' in dir(script))
-    if ('load_models' in dir(script)) and ('run' in dir(script)):
-        print('trueee')
+    """ if ('load_models' in dir(script)) and ('run' in dir(script)):
         return True
-    else: 
-        print('falseee')
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {script_name} is missing the functions 'load_models', 'run' or both!")
+    elif ('load_models' not in dir(script)):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {script_name} is missing the function 'load_models' but may still run!") """
+    if ('run' not in dir(script)):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {script_name} is missing the function 'run'!")
+    """ else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {script_name} is missing the functions 'load_models', 'run' or both!") """
         
 
 async def create_model_files(current_user_email: str, ai_id: str, db: Session, model_files: List[UploadFile] = File(...)):

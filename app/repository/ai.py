@@ -168,46 +168,66 @@ async def run_ai(current_user_email: str, ai_id: str, input_file_id: str, db: Se
     #check if the ai table has python script paths
     #check that the python script files exist in the filesystem
     python_file = check_python_files(ai_id, db)
-    #check if the table modelfile has files associated with this ai model
-    #check if those files exist in the file system
-    model_files = files.check_model_files(ai_id, db)
-    try:
-        # run the ai model
-        output_file_path = run_script(ai_id, python_file, model_files, input_file)
-        #check if result file exists
-        print("output file path hereeee:" + output_file_path + model.output_type)
-        if not os.path.isfile(output_file_path + model.output_type):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-            detail="There is no output file!")
+    print("WARNING: ", files.check_model_files_bool(ai_id, db))
+    #check if this is an AI Model with or without model files
+    if files.check_model_files_bool(ai_id, db):
+        #check if the table modelfile has files associated with this ai model
+        #check if those files exist in the file system
+        model_files = files.check_model_files(ai_id, db)
         try:
+            # run the ai model
+            output_file_path = run_script(ai_id, python_file, model_files, input_file)
+            #check if result file exists
+            print("output file path hereeee:" + output_file_path + model.output_type)
+            if not os.path.isfile(output_file_path + model.output_type):
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                detail="There is no output file!")
             if (model.output_type == ".nii.gz"):
                 return FileResponse(output_file_path + model.output_type, media_type="application/gzip", filename="result_" + input_file_name_no_extension + model.output_type)
             elif (model.output_type == ".csv"):
                 return FileResponse(output_file_path + model.output_type, media_type="text/csv", filename="result_" + input_file_name_no_extension + model.output_type)
             elif (model.output_type == ".png"):
                 return FileResponse(output_file_path + model.output_type, media_type="image/png", filename="result_" + input_file_name_no_extension + model.output_type)
-        finally:
-            input_directory_path = input_file.path.replace(input_file.name,"")
-            output_directory_path = "./outputfiles/" + input_file.input_file_id + "/"
-            #delete input files and output files after fileresponse
-            print("INPUT FILE PATH: ", input_directory_path, "OUTPUT DIRECTORY: ", output_directory_path)
-            """ if os.path.exists(input_directory_path):
-                shutil.rmtree(input_directory_path)
-            if os.path.exists(output_directory_path):
-                shutil.rmtree(output_directory_path) """
+            elif (model.output_type == ".wav"):
+                return FileResponse(output_file_path + model.output_type, media_type="audio/wav", filename="result_" + input_file_name_no_extension + model.output_type)
+        except:
+            error = logging.exception("run_script error: ")
+            print(error)
+            """ raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Script error") """
+            log_path = "./outputfiles/" + input_file.input_file_id + "/" + python_file.python_script_name[0:-3] + ".log"
+            if not os.path.isfile(log_path):
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                detail="There is no error log file!")
+            return FileResponse(log_path, media_type="text/plain", filename=python_file.python_script_name[0:-3] + "_error_log")
+        
+    else:
+        try:
+            # run the ai model
+            output_file_path = run_simple_script(ai_id, python_file, input_file)
+            #check if result file exists
+            print("output file path hereeee:" + output_file_path + model.output_type)
+            if not os.path.isfile(output_file_path + model.output_type):
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                detail="There is no output file!")
+            if (model.output_type == ".nii.gz"):
+                return FileResponse(output_file_path + model.output_type, media_type="application/gzip", filename="result_" + input_file_name_no_extension + model.output_type)
+            elif (model.output_type == ".csv"):
+                return FileResponse(output_file_path + model.output_type, media_type="text/csv", filename="result_" + input_file_name_no_extension + model.output_type)
+            elif (model.output_type == ".png"):
+                return FileResponse(output_file_path + model.output_type, media_type="image/png", filename="result_" + input_file_name_no_extension + model.output_type)
+            elif (model.output_type == ".wav"):
+                return FileResponse(output_file_path + model.output_type, media_type="audio/wav", filename="result_" + input_file_name_no_extension + model.output_type)
+        except:
+            error = logging.exception("run_script error: ")
+            print(error)
+            log_path = "./outputfiles/" + input_file.input_file_id + "/" + python_file.python_script_name[0:-3] + ".log"
+            if not os.path.isfile(log_path):
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                detail="There is no error log file!")
+            return FileResponse(log_path, media_type="text/plain", filename=python_file.python_script_name[0:-3] + "_error_log")
             
-    except:
-        error = logging.exception("run_script error: ")
-        print(error)
-        """ raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"Script error") """
-        log_path = "./outputfiles/" + input_file.input_file_id + "/" + python_file.python_script_name[0:-3] + ".log"
-        if not os.path.isfile(log_path):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-            detail="There is no error log file!")
-        return FileResponse(log_path, media_type="text/plain", filename=python_file.python_script_name[0:-3] + "_error_log")
-         
-    
+            
 def check_python_files(ai_id: str, db: Session):
     ai = db.query(models.AI).filter(models.AI.ai_id == ai_id).first()
     name_path = db.query(models.AI).filter(models.AI.ai_id == ai_id).with_entities(models.AI.python_script_name, models.AI.python_script_path).first()
@@ -254,15 +274,46 @@ def run_script( ai_id: str, python_file: dict, model_files: dict, input_file: di
                             level=logging.DEBUG)
         print("LOAD MODELS:", script.load_models(model_files))
         print("RUN:", script.run(input_file_path, output_file_name, output_directory_path))
-        """ print("INPUT FILE PATH: ", input_directory_path, "OUTPUT DIRECTORY: ", output_directory_path) """
-        """ #delete input files and output files
-        if os.path.exists(input_directory_path):
-            shutil.rmtree(input_directory_path)
-        if os.path.exists(output_directory_path):
-            shutil.rmtree(output_directory_path) """
         
     except:
         error = logging.exception("run_script errors:")
+        print(error)
+
+    return output_directory_path + output_file_name
+
+def run_simple_script( ai_id: str, python_file: dict, input_file: dict):
+    python_script_name = python_file.python_script_name[0:-3]
+    input_file_name = input_file.name
+    input_file_name_no_extension = input_file_name.split(".")[0]
+    print("input_file_name_no_extension: ", input_file_name_no_extension)
+    input_file_path = input_file.path
+    input_directory_path = input_file_path.replace(input_file_name,"")
+    # make output directory
+    os.makedirs("./outputfiles/" + input_file.input_file_id, exist_ok=True)
+    output_directory_path = "./outputfiles/" + input_file.input_file_id + "/"
+    output_file_name = "result_" + input_file_name_no_extension
+    print("output_file_name: ", output_file_name)
+    path = "./modelfiles/" + ai_id
+    is_directory = os.path.isdir(path)
+    if not is_directory:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} has no file directory!")
+    # add folder path to sys
+    sys.path.append(path)
+    # import the module
+    script = importlib.import_module(python_script_name)
+    # run "load_models" and "run"
+    try:
+        logname = output_directory_path + python_script_name + ".log"
+        print(logname)
+        logging.basicConfig(filename=logname,
+                            format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                            datefmt='%H:%M:%S',
+                            level=logging.DEBUG)
+        print("RUN:", script.run(input_file_path, output_file_name, output_directory_path))
+        
+    except:
+        error = logging.exception("run_simple_script errors:")
         print(error)
 
     return output_directory_path + output_file_name
