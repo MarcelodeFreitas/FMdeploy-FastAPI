@@ -83,17 +83,26 @@ class User(BaseModel):
     email: str
 
 class ShowUser(BaseModel):
-    """ user_id: str """
     name: str
     email: str
 
     class Config():
         orm_mode = True
 
-class ShowUserAdmin(BaseModel):
-    user_id: str 
+class ShowUserToAdmin(BaseModel):
+    user_id: str
     name: str
     email: str
+    password: str
+
+    class Config():
+        orm_mode = True
+
+class ShowUserAdmin(BaseModel):
+    user_id: str
+    name: str
+    email: str
+    password: str
     is_admin: bool
 
     class Config():
