@@ -49,9 +49,76 @@ def is_admin_bool(email: str, db:Session):
     user = get_user_by_email(email, db)
     return user.is_admin
 
-def get_user_by_id_exposed(user_email: str, user_id: int, db: Session):
+#update current user info: name, email
+def update(user_email: str, new_name: str, new_email: str, db: Session):
+    #check if user exists
+    user = get_user_query_by_email(user_email, db)
+    #check what data has been provided in the request
+    if (new_email == "" or new_email == None) and (new_name == "" or new_name == None):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"Request user update fields are both empty!")
+    #if empty keep previous data
+    if new_email == "" or new_email == None:
+        new_email = user.first().email
+    if new_name == "" or new_name == None:
+        new_name = user.first().name
+    #update user in database
+    try:
+        user.update({'name': new_name})
+        user.update({'email': new_email})
+        db.commit()
+    #raise exception if there is an error
+    except:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, 
+        detail=f"Error updating user information!")
+    return HTTPException(status_code=status.HTTP_200_OK, 
+    detail=f"User data was successfully updated.")
+    
+#update user by email for admin
+def update_by_email(user_email: str, current_email: str, new_name: str, new_email: str, db: Session):
     #check if admin
     get_admin(user_email, db)
+    #check if user exists
+    user = get_user_query_by_email(current_email, db)
+    #check what data has been provided in the request
+    if (new_email == "" or new_email == None) and (new_name == "" or new_name == None):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"Request user update fields are both empty!")
+    #if empty keep previous data
+    if new_email == "" or new_email == None:
+        new_email = user.first().email
+    if new_name == "" or new_name == None:
+        new_name = user.first().name
+    #update user in database
+    try:
+        user.update({'name': new_name})
+        user.update({'email': new_email})
+        db.commit()
+    #raise exception if there is an error
+    except:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, 
+        detail=f"Error updating user information!")
+    return HTTPException(status_code=status.HTTP_200_OK, 
+    detail=f"User data was successfully updated.")
+    
+# create a user
+def create(name: str, email: str, password: str, db: Session):
+    # create a new usr object and hash the password
+    new_user = models.User(name=name, email=email, password=hashing.Hash.bcrypt(password))
+    # commit new user to the database
+    try: 
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+    #raise exception if there is an error
+    #I assume the only possible error is email duplication
+    except:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, 
+        detail=f"Email: {email}, is already registered!")
+    return new_user
+
+#get user id for internal use
+def get_by_id(user_id: int, db: Session):
     #get user by id
     user = db.query(models.User).filter(models.User.user_id == user_id).first()
     if not user:
@@ -59,7 +126,10 @@ def get_user_by_id_exposed(user_email: str, user_id: int, db: Session):
          detail=f"User with id number: {user_id} was not found!")
     return user
 
-def get_user_by_id(user_id: int, db: Session):
+#get user by id for external use by admin
+def get_by_id_exposed(user_email: str, user_id: int, db: Session):
+    #check if admin
+    get_admin(user_email, db)
     #get user by id
     user = db.query(models.User).filter(models.User.user_id == user_id).first()
     if not user:
@@ -73,17 +143,6 @@ def get_user_query_by_id(user_id: int, db: Session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"User with id number: {user_id} was not found!")
     return user
-
-def create_user(name: str, email: str, password: str, db: Session):
-    new_user = models.User(name=name, email=email, password=hashing.Hash.bcrypt(password))
-    try: 
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-    except:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, 
-        detail=f"Email: {email}, is already registered!")
-    return new_user
 
 def get_user_by_email_exposed(user_email: str, email: str, db: Session):
     #check if admin
@@ -189,26 +248,3 @@ def update_user_by_id(user_id: int, user_email: str, user_name: str, db: Session
         detail=f"Email: {user_email}, is already registered!")
     return HTTPException(status_code=status.HTTP_200_OK, 
     detail=f"User with id: {user_id} was successfully updated.")
-
-def update_user_by_email(user_email: str, new_name: str, new_email: str, db: Session):
-    #check if user exists
-    user = get_user_query_by_email(user_email, db)
-    #check what data has been provided in the request
-    if (new_email == "" or new_email == None) and (new_name == "" or new_name == None):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"Request user update fields are both empty!")
-    #if empty keep previous data
-    if new_email == "" or new_email == None:
-        new_email = user.first().email
-    if new_name == "" or new_name == None:
-        new_name = user.first().name
-    #update user in database
-    try:
-        user.update({'name': new_name})
-        user.update({'email': new_email})
-        db.commit()
-    except:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, 
-        detail=f"Email: {user_email}, is already registered!")
-    return HTTPException(status_code=status.HTTP_200_OK, 
-    detail=f"User data was successfully updated.")

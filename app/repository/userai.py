@@ -65,9 +65,9 @@ def user_share_ai(user_id_sharer: int, user_id_beneficiary: int, ai_id: str, db:
     #check if user is the owner
     check_owner(user_id_sharer, ai_id, db)
     #check the user exists
-    user.get_user_by_id(user_id_sharer, db)
+    user.get_by_id(user_id_sharer, db)
     #check user beneficiary exists
-    user.get_user_by_id(user_id_beneficiary, db)
+    user.get_by_id(user_id_beneficiary, db)
     #check the ai model exists
     ai.get_ai_by_id(ai_id, db)
     #check if it is already shared with this user
@@ -160,7 +160,7 @@ def check_shared_entry(user_id_beneficiary: int, ai_id: str, db: Session):
 
 def user_shared_ai_list(user_id: int, db: Session):
     #check the user exists
-    user.get_user_by_id(user_id, db)
+    user.get_by_id(user_id, db)
     #get entries where user is the owner from UserAIList
     userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == False).outerjoin(models.AI).outerjoin(models.User).all()
     if not userai:

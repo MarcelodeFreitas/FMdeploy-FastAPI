@@ -90,7 +90,7 @@ def create_ai_admin(user_email: str, request: schemas.CreateAI, db: Session):
     ai_id = str(uuid.uuid4().hex)
     #check admin
     user.get_admin(user_email, db)
-    user.get_user_by_id(request.user_id, db)
+    user.get_by_id(request.user_id, db)
     create_ai_entry(ai_id, request, db)
     userai.create_ai_user_list_entry(request.user_id, ai_id, db)
     return {"ai_id": ai_id}
@@ -126,7 +126,7 @@ async def run_ai_admin(current_user_email: str, user_id: int, ai_id: str, input_
     #check permissions
     user.get_admin(current_user_email, db)
     #check if the user id provided exists
-    user.get_user_by_id(user_id, db)
+    user.get_by_id(user_id, db)
     #check if the ai id provided exists
     get_ai_by_id(ai_id, db)
     #check if the ai model is public

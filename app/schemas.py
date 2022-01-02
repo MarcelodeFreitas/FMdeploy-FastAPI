@@ -122,6 +122,14 @@ class UpdateUser(BaseModel):
 
     class Config():
         orm_mode = True
+        
+class UpdateUserAdmin(BaseModel):
+    current_email: str
+    new_name: Optional[str] = None
+    new_email: Optional[str] = None
+
+    class Config():
+        orm_mode = True
 
 class UserAIList(BaseModel):
     user_ai_list_id: int
