@@ -137,11 +137,12 @@ def get_by_id_exposed(user_email: str, user_id: int, db: Session):
          detail=f"User with id number: {user_id} was not found!")
     return user
 
-def get_user_query_by_id(user_id: int, db: Session):
-    user = db.query(models.User).filter(models.User.user_id == user_id)
-    if not user.first():
+def get_user_by_email(email: str, db: Session):
+    #get user by email
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"User with id number: {user_id} was not found!")
+         detail=f"User with email: {email} was not found!")
     return user
 
 def get_user_by_email_exposed(user_email: str, email: str, db: Session):
@@ -154,12 +155,11 @@ def get_user_by_email_exposed(user_email: str, email: str, db: Session):
          detail=f"User with email: {email} was not found!")
     return user
 
-def get_user_by_email(email: str, db: Session):
-    #get user by email
-    user = db.query(models.User).filter(models.User.email == email).first()
-    if not user:
+def get_user_query_by_id(user_id: int, db: Session):
+    user = db.query(models.User).filter(models.User.user_id == user_id)
+    if not user.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"User with email: {email} was not found!")
+         detail=f"User with id number: {user_id} was not found!")
     return user
 
 def get_user_query_by_email(user_email: str, db: Session):
