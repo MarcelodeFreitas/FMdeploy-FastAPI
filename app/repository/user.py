@@ -193,6 +193,7 @@ def get_user_query_by_email(user_email: str, db: Session):
          detail=f"User with email: {user_email} was not found!")
     return user
 
+#deletes a user by id from the database for external use
 def delete_user_by_id_exposed(user_email: str, user_id: int, db: Session):
     #check if admin
     get_admin(user_email, db)
@@ -207,7 +208,8 @@ def delete_user_by_id_exposed(user_email: str, user_id: int, db: Session):
          detail=f"Error deleting user with id: {user_id} from database!")
     return HTTPException(status_code=status.HTTP_200_OK, 
     detail=f"User with id: {user_id} was successfully deleted.")
-    
+
+#deletes a user by id from the database for internal use
 def delete_user_by_id(user_id: int, db: Session):
     #check if user exists
     user = get_user_query_by_id(user_id, db)
