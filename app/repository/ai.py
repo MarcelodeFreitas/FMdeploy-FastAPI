@@ -97,7 +97,7 @@ def create_ai_admin(user_email: str, request: schemas.CreateAI, db: Session):
 
 def create_ai_current(request: schemas.CreateAI, user_email: str, db: Session):
     ai_id = str(uuid.uuid4().hex)
-    user_object = user.get_user_by_email(user_email, db)
+    user_object = user.get_by_email(user_email, db)
     create_ai_entry(ai_id, user_object.name, request, db)
     userai.create_ai_user_list_entry(user_object.user_id, ai_id, db)
     return {"ai_id": ai_id}
@@ -153,7 +153,7 @@ async def run_ai_admin(current_user_email: str, user_id: int, ai_id: str, input_
 
 async def run_ai(current_user_email: str, ai_id: str, input_file_id: str, db: Session):
     #check if the user id provided exists
-    user_id = user.get_user_by_email(current_user_email, db).user_id
+    user_id = user.get_by_email(current_user_email, db).user_id
     #check if the ai id provided exists
     model = get_ai_by_id(ai_id, db)
     print("hereeeee:" + model.input_type + model.output_type)
@@ -322,7 +322,7 @@ def delete(user_email: str, ai_id: str, db: Session):
     #check if the ai exists
     get_ai_by_id(ai_id, db)
     #get current user id
-    user_id = user.get_user_by_email(user_email, db).user_id
+    user_id = user.get_by_email(user_email, db).user_id
     #check permissions
     #only the owner can delete ai model
     userai.check_owner(user_id, ai_id, db)

@@ -1,0 +1,11 @@
+stop PostgreSQL
+pg_ctl -D "C:\Program Files\PostgreSQL\14\data" stop
+
+start PostgreSQL
+pg_ctl -D "C:\Program Files\PostgreSQL\14\data" start
+
+start virtual env
+& c:/Users/pc/Documents/GitHub/FMdeploy-FastAPI/env/Scripts/Activate.ps1
+
+start fastapi
+py run.py
