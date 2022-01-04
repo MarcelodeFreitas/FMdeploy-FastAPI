@@ -59,7 +59,7 @@ def delete_current_user_account(db: Session = Depends(get_db), get_current_user:
 #delete user by id for admin
 @router.delete('/admin/{user_id}', status_code = status.HTTP_200_OK)
 def delete_user_by_id_admin(user_id, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return user.delete_user_by_id_exposed(get_current_user, user_id, db)
+    return user.delete_by_id_exposed(get_current_user, user_id, db)
 
 #delete user by email for admin
 #CREATE

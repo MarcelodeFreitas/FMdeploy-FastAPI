@@ -52,7 +52,7 @@ def is_admin_bool(email: str, db:Session):
 #update current user info: name, email
 def update(user_email: str, new_name: str, new_email: str, db: Session):
     #check if user exists
-    user = get_user_query_by_email(user_email, db)
+    user = get_query_by_email(user_email, db)
     #check what data has been provided in the request
     if (new_email == "" or new_email == None) and (new_name == "" or new_name == None):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -79,7 +79,7 @@ def update_by_email(current_user_email: str, email: str, new_name: str, new_emai
     #check if admin
     get_admin(current_user_email, db)
     #check if user exists
-    user = get_user_query_by_email(email, db)
+    user = get_query_by_email(email, db)
     #check what data has been provided in the request
     if (new_email == "" or new_email == None) and (new_name == "" or new_name == None):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -100,28 +100,6 @@ def update_by_email(current_user_email: str, email: str, new_name: str, new_emai
         detail=f"Error updating user information!")
     return HTTPException(status_code=status.HTTP_200_OK, 
     detail=f"User data was successfully updated.")
-    
-def update_by_id(user_id: int, user_email: str, user_name: str, db: Session):
-    #check if user exists
-    user = get_user_query_by_id(user_id, db)
-    #check what data has been provided in the request
-    if (user_email == "" or user_email == None) and (user_name == "" or user_name == None):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"Request user update fields are both empty!")
-    if user_email == "" or user_email == None:
-        user_email = user.first().email
-    if user_name == "" or user_name == None:
-        user_name = user.first().name
-    #update user in database
-    try:
-        user.update({'name': user_name})
-        user.update({'email': user_email})
-        db.commit()
-    except:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, 
-        detail=f"Email: {user_email}, is already registered!")
-    return HTTPException(status_code=status.HTTP_200_OK, 
-    detail=f"User with id: {user_id} was successfully updated.")
     
 # create a user
 def create(name: str, email: str, password: str, db: Session):
@@ -179,14 +157,16 @@ def get_by_email_exposed(user_email: str, email: str, db: Session):
          detail=f"User with email: {email} was not found!")
     return user
 
-def get_user_query_by_id(user_id: int, db: Session):
+#get the user object from the database by id
+def get_query_by_id(user_id: int, db: Session):
     user = db.query(models.User).filter(models.User.user_id == user_id)
     if not user.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"User with id number: {user_id} was not found!")
     return user
 
-def get_user_query_by_email(user_email: str, db: Session):
+#get the user object from the database by email
+def get_query_by_email(user_email: str, db: Session):
     user = db.query(models.User).filter(models.User.email == user_email)
     if not user.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -194,11 +174,11 @@ def get_user_query_by_email(user_email: str, db: Session):
     return user
 
 #deletes a user by id from the database for external use
-def delete_user_by_id_exposed(user_email: str, user_id: int, db: Session):
+def delete_by_id_exposed(user_email: str, user_id: int, db: Session):
     #check if admin
     get_admin(user_email, db)
     #check if user exists
-    user = get_user_query_by_id(user_id, db)
+    user = get_query_by_id(user_id, db)
     #delete user
     try:
         user.delete(synchronize_session=False)
@@ -212,7 +192,7 @@ def delete_user_by_id_exposed(user_email: str, user_id: int, db: Session):
 #deletes a user by id from the database for internal use
 def delete_user_by_id(user_id: int, db: Session):
     #check if user exists
-    user = get_user_query_by_id(user_id, db)
+    user = get_query_by_id(user_id, db)
     #delete user
     try:
         user.delete(synchronize_session=False)
@@ -225,7 +205,7 @@ def delete_user_by_id(user_id: int, db: Session):
     
 def delete_user_by_email(user_email: str, db: Session):
     #check if user exists
-    user = get_user_query_by_email(user_email, db)
+    user = get_query_by_email(user_email, db)
     #delete user
     try:
         user.delete(synchronize_session=False)
