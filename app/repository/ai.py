@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status, UploadFile, File
+from fastapi import HTTPException, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from .. import schemas, models
@@ -389,7 +389,7 @@ def delete_admin(user_email: str, ai_id: str, db: Session):
          detail=f"AI model with id number {ai_id} has no directory in the filesystem!") """
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"The AI model id {ai_id} was successfully deleted.")
 
-def update_ai_by_id_exposed(user_email: str, ai_id: int, title: str, description: str, input_type: str, output_type: str, is_private: bool,  db: Session):
+def update_by_id_exposed(user_email: str, ai_id: int, title: str, description: str, input_type: str, output_type: str, is_private: bool,  db: Session):
     #check permissions
     #check if owner or admin
     if not ((user.is_admin_bool(user_email, db)) or (userai.is_owner_bool(user_email, ai_id, db))):
