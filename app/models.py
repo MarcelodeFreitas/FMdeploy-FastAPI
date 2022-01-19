@@ -10,9 +10,9 @@ class User(Base):
     __tablename__ = 'user'
     user_id = Column(Integer, primary_key=True, index=True)
     userailist = relationship("UserAIList")
-    name = Column(String(length=255))
-    email = Column(String(length=255), unique=True)
-    password = Column(String(length=255))
+    name = Column(String(length=255), nullable=False)
+    email = Column(String(length=255), unique=True, nullable=False)
+    password = Column(String(length=255), nullable=False)
     is_admin = Column(Boolean, default=False, nullable=True)
     
 """ event.listen(User.__table__, 'after_create',
