@@ -1,38 +1,44 @@
-# docker-compose.prod.yml
-
-version: '3.8'
+version: '2'
 
 services:
-  web:
+
+  backend:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    expose:  # new
-      - 80
-    labels:  # new
-      - "traefik.enable=true"
-      - "traefik.http.routers.fastapi.rule=Host(`fastapi-traefik.your-domain.com`)"
-      - "traefik.http.routers.fastapi.tls=true"
-      - "traefik.http.routers.fastapi.tls.certresolver=letsencrypt"
-  traefik:  # new
+    expose:  
+      - "8000"
+    volumes:
+      - .:/app/:cached
+      - ./database:/database.db
+      - ./inputfiles:/inputfiles
+      - ./modelfiles:/modelfiles
+      - ./outputfiles:/outputfiles
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.backend.rule=Host(`localhost`)
+      - traefik.http.services.backend.loadbalancer.server.port=8000
+      - traefik.http.routers.backend.tls=true
+      - traefik.http.routers.backend.tls.certresolver=letsencrypt
+  
+  traefik-backend:
     build:
       context: .
       dockerfile: Dockerfile.traefik
     ports:
-      - 80:80
-      - 443:443
+      - "36554:80"
+      - "36555:443"
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik-public-certificates:/certificates"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik-public-certificates:/certificates
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`dashboard-fastapi-traefik.your-domain.com`) && (PathPrefix(`/`)"
-      - "traefik.http.routers.dashboard.tls=true"
-      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=testuser:$$apr1$$jIKW.bdS$$eKXe4Lxjgy/rH65wP1iQe1"
+      - traefik.enable=true
+      - traefik.http.routers.dashboard.rule=Host(`dashboard.localhost`)
+      - traefik.http.routers.dashboard.tls=true
+      - traefik.http.routers.dashboard.tls.certresolver=letsencrypt
+      - traefik.http.routers.dashboard.service=api@internal
+      - traefik.http.routers.dashboard.middlewares=auth
+      - traefik.http.middlewares.auth.basicauth.users=testuser:$$apr1$$jIKW.bdS$$eKXe4Lxjgy/rH65wP1iQe1
 
 volumes:
-  postgres_data_prod:
   traefik-public-certificates:

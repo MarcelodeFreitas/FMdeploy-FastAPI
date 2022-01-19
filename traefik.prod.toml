@@ -22,7 +22,7 @@ dashboard = true
     exposedByDefault = false
 
 [certificatesResolvers.letsencrypt.acme]
-  email = "marcelodefreitas25@gmail.com"
+  email = "fmdeploy@gmail.com"
   storage = "/certificates/acme.json"
   [certificatesResolvers.letsencrypt.acme.httpChallenge]
     entryPoint = "web"
