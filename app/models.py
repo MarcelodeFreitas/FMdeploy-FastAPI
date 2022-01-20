@@ -15,8 +15,7 @@ class User(Base):
     password = Column(String(length=255), nullable=False)
     is_admin = Column(Boolean, default=False, nullable=True)
     
-""" event.listen(User.__table__, 'after_create',
-            DDL(" INSERT INTO \"user\" (name, email, password, is_admin) VALUES ('admin', 'fmdeploy@gmail.com', '$2b$12$cm7LbkGUMSzbWe9fAdCXJO/lzivm49UHi4aEGR21bpbQ5aX6a4hdS', TRUE) ")) """
+# add one admin the database
 event.listen(User.__table__, 'after_create',
             DDL(" INSERT INTO user (name, email, password, is_admin) VALUES ('admin', 'fmdeploy@gmail.com', '$2b$12$cm7LbkGUMSzbWe9fAdCXJO/lzivm49UHi4aEGR21bpbQ5aX6a4hdS', TRUE) "))
     

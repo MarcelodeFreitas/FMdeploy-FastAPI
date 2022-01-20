@@ -53,7 +53,7 @@ app.include_router(files.router)
 app.include_router(userai.router)
 
 #delete files that haven't been accessed in 24h, checked every 24h since server start
-@app.on_event("startup")
+""" @app.on_event("startup")
 @repeat_every(seconds = 60 * 24 * 60) #repeat every hour
 async def file_cleanup():
     try: 
@@ -92,7 +92,7 @@ async def file_cleanup():
                         print("DELETING DIRECTORY: ", dir_path)
                         shutil.rmtree(dir_path)
     except:
-        print("error")
+        print("error") """
 
 @app.get("/")
 async def main():
