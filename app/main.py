@@ -15,7 +15,6 @@ app = FastAPI()
 
 #CORS
 origins = [
-    "http://localhost",
     "http://localhost:3000",
 ]
 
@@ -53,7 +52,7 @@ app.include_router(files.router)
 app.include_router(userai.router)
 
 #delete files that haven't been accessed in 24h, checked every 24h since server start
-""" @app.on_event("startup")
+@app.on_event("startup")
 @repeat_every(seconds = 60 * 24 * 60) #repeat every hour
 async def file_cleanup():
     try: 
@@ -83,7 +82,6 @@ async def file_cleanup():
                     fil=os.path.join(roots,f)
                     fil_stat=os.stat(fil)
                     last_access_time=fil_stat.st_atime
-                    """ print(fil, time.ctime(last_access_time)) """
                     if last_access_time < present_time-max_access_time:
                         fil_split = fil.split("\\")
                         dir_path = fil_split[0] + "\\" + fil_split[1] + "\\" + fil_split[2]
@@ -92,7 +90,7 @@ async def file_cleanup():
                         print("DELETING DIRECTORY: ", dir_path)
                         shutil.rmtree(dir_path)
     except:
-        print("error") """
+        print("error")
 
 @app.get("/")
 async def main():
