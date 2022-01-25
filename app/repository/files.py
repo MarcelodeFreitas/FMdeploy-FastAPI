@@ -99,7 +99,6 @@ async def create_python_script(current_user_email: str, ai_id: str, db: Session,
     if not ai.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
     #check if model already has python script
-    print("HEEERE::", ai.first().python_script_path)
     if ai.first().python_script_path != None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {ai_id} already has a python script!")
     #try to update ai data fields related to python script

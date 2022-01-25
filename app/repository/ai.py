@@ -337,21 +337,21 @@ def delete(user_email: str, ai_id: str, db: Session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"AI model with id number {ai_id} error deleting from database!")
     #delete from UserAI List
-    userai.delete(user_id, ai_id, db)
+    #not needed because its deleted by cascade
+    #userai.delete(owner_id, ai_id, db)
     #deleter from ModelFile table
-    files.delete_model_files(ai_id, db)
+    #not needed because its deleted by cascade
+    #files.delete_model_files(ai_id, db)
     #delete ai folder from filesystem
     path = "./modelfiles/" + ai_id
     if not os.path.isdir(path):
-        pass
-        """ raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"AI model with id number {ai_id} has no file directory!") """
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} has no file directory!")
     try:
         shutil.rmtree(path)
     except:
-        pass
-        """ raise HTTPException(status_code=status.HTTP_200_OK,
-         detail=f"AI model with id number {ai_id} has no directory in the filesystem!") """
+        raise HTTPException(status_code=status.HTTP_200_OK,
+         detail=f"AI model with id number {ai_id} has no directory in the filesystem!")
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"The AI model id {ai_id} was successfully deleted.")
 
 def delete_admin(user_email: str, ai_id: str, db: Session):
@@ -372,21 +372,20 @@ def delete_admin(user_email: str, ai_id: str, db: Session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"AI model with id number {ai_id} error deleting from database!")
     #delete from UserAI List
-    userai.delete(owner_id, ai_id, db)
+    #not needed because its deleted by cascade
+    #userai.delete(owner_id, ai_id, db)
     #deleter from ModelFile table
     files.delete_model_files(ai_id, db)
     #delete ai folder from filesystem
     path = "./modelfiles/" + ai_id
     if not os.path.isdir(path):
-        pass
-        """ raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"AI model with id number {ai_id} has no file directory!") """
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"AI model with id number {ai_id} has no file directory!")
     try:
         shutil.rmtree(path)
     except:
-        pass
-        """ raise HTTPException(status_code=status.HTTP_200_OK,
-         detail=f"AI model with id number {ai_id} has no directory in the filesystem!") """
+        raise HTTPException(status_code=status.HTTP_200_OK,
+         detail=f"AI model with id number {ai_id} has no directory in the filesystem!")
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"The AI model id {ai_id} was successfully deleted.")
 
 def update_ai_by_id_exposed(user_email: str, ai_id: int, title: str, description: str, input_type: str, output_type: str, is_private: bool,  db: Session):
