@@ -36,7 +36,7 @@ def get_by_id(user_id, db: Session = Depends(get_db), get_current_user: schemas.
     return user.get_by_id_exposed(get_current_user, user_id, db)
 
 #get current user
-@router.get('/current', status_code = status.HTTP_200_OK, response_model=schemas.ShowUser)
+@router.get('', status_code = status.HTTP_200_OK, response_model=schemas.ShowUser)
 def get_current_user(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return user.get_by_email(get_current_user, db)
 
@@ -47,14 +47,19 @@ def update_current_user(request: schemas.UpdateUser, db: Session = Depends(get_d
     return user.update_by_email(get_current_user, request.new_name, request.new_email, db)
 
 #delete user by id for admin
-@router.delete('/admin/{user_id}', status_code = status.HTTP_200_OK)
+@router.delete('/admin/id/{user_id}', status_code = status.HTTP_200_OK)
 def delete_user_by_id(user_id, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return user.delete_by_id_exposed(get_current_user, user_id, db)
 
+#delete user by email for admin
+@router.delete('/admin/email/{user_email}', status_code = status.HTTP_200_OK)
+def delete_user_by_email(user_email, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return user.delete_by_email_exposed(get_current_user, user_email, db)
+
 #delete current user account
-@router.delete('/current', status_code = status.HTTP_200_OK)
-def delete_current_user(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return user.delete_current(get_current_user, db)
+@router.delete('/account', status_code = status.HTTP_200_OK)
+def delete_current_user_account(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return user.delete_current_account(get_current_user, db)
     
 #get user by email for admin
 @router.get('/admin/email/{email}', status_code = status.HTTP_200_OK, response_model=schemas.ShowUser)
