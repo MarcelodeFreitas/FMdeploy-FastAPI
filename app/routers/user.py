@@ -62,6 +62,6 @@ def delete_current_user_account(db: Session = Depends(get_db), get_current_user:
     return user.delete_current_account(get_current_user, db)
     
 #get user by email for admin
-@router.get('/admin/email/{email}', status_code = status.HTTP_200_OK, response_model=schemas.ShowUser)
+@router.get('/admin/email/{email}', status_code = status.HTTP_200_OK, response_model=schemas.ShowUserAdmin)
 def get_user_by_email(email, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return user.get_by_email_exposed(get_current_user, email, db)
