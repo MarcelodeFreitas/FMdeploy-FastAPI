@@ -31,7 +31,7 @@ def get_owner(ai_id: str, db):
     return user
 
 def is_owner_bool(user_email: str, ai_id: str, db):
-    user_id = user.get_user_by_email(user_email, db).user_id
+    user_id = user.get_by_email(user_email, db).user_id
     entry = db.query(models.UserAIList).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.fk_ai_id == ai_id).with_entities(models.UserAIList.owner).first()
     if not entry:
         return False
@@ -53,7 +53,7 @@ def delete(user_id: int, ai_id: str, db: Session):
 
 def user_owned_ai_list(current_user_email: str, db: Session):
     #check the user exists
-    user_id = user.get_user_by_email(current_user_email, db).user_id
+    user_id = user.get_by_email(current_user_email, db).user_id
     #get entries where user is the owner from UserAIList
     userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == True).outerjoin(models.AI).outerjoin(models.User).with_entities(models.AI.created_in, models.AI.author, models.AI.title, models.AI.ai_id, models.AI.description, models.AI.input_type, models.AI.output_type, models.AI.is_private, models.User.name).all()
     if not userai:
@@ -65,9 +65,9 @@ def user_share_ai(user_id_sharer: int, user_id_beneficiary: int, ai_id: str, db:
     #check if user is the owner
     check_owner(user_id_sharer, ai_id, db)
     #check the user exists
-    user.get_user_by_id(user_id_sharer, db)
+    user.get_by_id(user_id_sharer, db)
     #check user beneficiary exists
-    user.get_user_by_id(user_id_beneficiary, db)
+    user.get_by_id(user_id_beneficiary, db)
     #check the ai model exists
     ai.get_ai_by_id(ai_id, db)
     #check if it is already shared with this user
@@ -99,9 +99,9 @@ def user_share_ai_exposed(current_user_email: str, beneficiary_email: str, ai_id
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
          detail=f"User with email: {current_user_email} does not have permissions to share AI model id: {ai_id}!")
     #check the user exists
-    user_id_sharer = user.get_user_by_email(current_user_email, db).user_id
+    user_id_sharer = user.get_by_email(current_user_email, db).user_id
     #check user beneficiary exists
-    user_id_beneficiary = user.get_user_by_email(beneficiary_email, db).user_id
+    user_id_beneficiary = user.get_by_email(beneficiary_email, db).user_id
     #check if it is already shared with this user
     check_shared(user_id_beneficiary, ai_id, db)
     #create UserAi List table entry where owner=false and beneficiary=true
@@ -127,9 +127,9 @@ def user_cancel_share_ai(current_user_email: str, beneficiary_email: str, ai_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
          detail=f"User with email: {current_user_email} does not have permissions to share AI model id: {ai_id}!")
     #check the user exists
-    user_id_sharer = user.get_user_by_email(current_user_email, db).user_id
+    user_id_sharer = user.get_by_email(current_user_email, db).user_id
     #check user beneficiary exists
-    user_id_beneficiary = user.get_user_by_email(beneficiary_email, db).user_id
+    user_id_beneficiary = user.get_by_email(beneficiary_email, db).user_id
     #check if it is shared with this user
     userai_entry = check_shared_entry(user_id_beneficiary, ai_id, db)
     #deleting entry from userai list
@@ -160,7 +160,7 @@ def check_shared_entry(user_id_beneficiary: int, ai_id: str, db: Session):
 
 def user_shared_ai_list(user_id: int, db: Session):
     #check the user exists
-    user.get_user_by_id(user_id, db)
+    user.get_by_id(user_id, db)
     #get entries where user is the owner from UserAIList
     userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == False).outerjoin(models.AI).outerjoin(models.User).all()
     if not userai:
@@ -170,7 +170,7 @@ def user_shared_ai_list(user_id: int, db: Session):
 
 def user_shared_ai_list_exposed(current_user_email: str, db: Session):
     #check the user exists
-    user_id = user.get_user_by_email(current_user_email, db).user_id
+    user_id = user.get_by_email(current_user_email, db).user_id
     #get entries where user is the beneficiary from UserAIList
     userai = db.query(models.UserAIList, models.AI, models.User).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == False).outerjoin(models.AI).outerjoin(models.User).with_entities(models.AI.created_in, models.AI.author, models.AI.title, models.AI.ai_id, models.AI.description, models.AI.input_type, models.AI.output_type, models.AI.is_private).all()
     if not userai:
