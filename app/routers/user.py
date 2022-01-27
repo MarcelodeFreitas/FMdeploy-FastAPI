@@ -56,10 +56,15 @@ def delete_user_by_id(user_id, db: Session = Depends(get_db), get_current_user: 
 def delete_user_by_email(user_email, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return user.delete_by_email_exposed(get_current_user, user_email, db)
 
-#delete current user account
+#delete current user account, delete all models and files, shared models will also be deleted1
 @router.delete('/account', status_code = status.HTTP_200_OK)
 def delete_current_user_account(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return user.delete_current_account(get_current_user, db)
+
+#delete current user but leave all models and files
+@router.delete('', status_code = status.HTTP_200_OK)
+def delete_current_user(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return user.delete_by_email(get_current_user, db)
     
 #get user by email for admin
 @router.get('/admin/email/{email}', status_code = status.HTTP_200_OK, response_model=schemas.ShowUserAdmin)

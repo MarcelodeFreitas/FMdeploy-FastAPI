@@ -355,12 +355,10 @@ def delete(user_email: str, ai_id: str, db: Session):
     return HTTPException(status_code=status.HTTP_200_OK, detail=f"The AI model id {ai_id} was successfully deleted.")
 
 def delete_admin(user_email: str, ai_id: str, db: Session):
-    #check if the ai exists
-    ai_object = get_ai_by_id(ai_id, db)
-    #check permissions
+    #check if admin
     user.is_admin(user_email, db)
-    #get owner id for ai model
-    owner_id = userai.get_owner(ai_id, db).user_id
+    #check if the ai exists
+    get_ai_by_id(ai_id, db)
     #delete ai from database
     ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
     if not ai.first():
@@ -375,7 +373,8 @@ def delete_admin(user_email: str, ai_id: str, db: Session):
     #not needed because its deleted by cascade
     #userai.delete(owner_id, ai_id, db)
     #deleter from ModelFile table
-    files.delete_model_files(ai_id, db)
+    #not needed because its deleted by cascade
+    #files.delete_model_files(ai_id, db)
     #delete ai folder from filesystem
     path = "./modelfiles/" + ai_id
     if not os.path.isdir(path):

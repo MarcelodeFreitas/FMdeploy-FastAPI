@@ -155,7 +155,7 @@ def delete_by_email_exposed(current_user_email: str, user_email: str, db: Sessio
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"Error deleting user with email: {user_email} from database!")
     return HTTPException(status_code=status.HTTP_200_OK, 
-    detail=f"User with email: {user_email} was successfully deleted.")
+    detail=f"User with email: {user_email} was successfully deleted.")  
 
 #delete current user, all models and modelfiles
 #delete user account
@@ -163,14 +163,17 @@ def delete_current_account(current_user_email: str, db: Session):
     #check if user exists
     user = get_by_email(current_user_email, db)
     user_id = user.user_id
-    """ try: """
-    #list ai
-    ai_list = db.query(models.UserAIList).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == True).all()
-    #delete all ai models owned by the user
-    if len(ai_list) > 0:
-        for ai_model in ai_list:
-            ai.delete(current_user_email, ai_model.fk_ai_id, db)
-    #delete user
+    try:
+        #list ai
+        ai_list = db.query(models.UserAIList).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == True).all()
+        #delete all ai models owned by the user
+        if len(ai_list) > 0:
+            for ai_model in ai_list:
+                ai.delete(current_user_email, ai_model.fk_ai_id, db)
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"Error deleting ai models and files for user with email: {current_user_email} !")
+    #delete user from user and userailist tables
     delete_by_email(current_user_email, db)
     return HTTPException(status_code=status.HTTP_200_OK, 
     detail=f"User account successfuly deleted!")
