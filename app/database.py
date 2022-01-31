@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 SQLALCHAMY_DATABASE_URL = 'mysql+mysqlconnector://root:1875mdfm@localhost:3306/fmdeploy_db'
 
-engine = create_engine(SQLALCHAMY_DATABASE_URL, echo=True)
+engine = create_engine(SQLALCHAMY_DATABASE_URL) #, echo=true
 
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False,)
 

@@ -15,11 +15,15 @@ router = APIRouter(
     tags=['New Authentication']
 )
 
+#__________________________CONSTANTS______________________
+
 # to get a string like this run:
 # openssl rand -hex 32
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+#__________________________PYDANTIC SCHEMAS______________________
 
 class Token(BaseModel):
     access_token: str
@@ -37,8 +41,7 @@ class User(BaseModel):
     class Config():
         orm_mode = True
 
-class UserInDB(User):
-    password: str
+#_______________CRYPTOGRAPHY CONTEXT AND SCOPE DEFINITION____________
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -46,6 +49,8 @@ oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="auth/token",
     scopes={"admin": "Has access to admin privileges"},
 )
+
+#__________________________FUNCTIONS______________________
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -106,9 +111,9 @@ async def get_current_user(security_scopes: SecurityScopes, token: str = Depends
             )
     return user
 
-async def get_current_active_user(current_user: User = Security(get_current_user, scopes=[])):
-    return current_user
+#__________________________ROUTERS______________________
 
+#generate token
 @router.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = authenticate_user(db, form_data.username, form_data.password)
@@ -128,19 +133,14 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         )
     return {"access_token": access_token, "token_type": "bearer"}
 
-
+#example of secure router with normal user
 @router.get("/users/me/", response_model=User)
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
+async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
 
-
+#example of secure router with admin
 @router.get("/users/me/items/")
 async def read_own_items(
-    current_user: User = Security(get_current_active_user, scopes=["admin"])
+    current_user: User = Security(get_current_user, scopes=["admin"])
 ):
     return [{"item_id": "Foo", "owner": current_user.email}]
-
-
-@router.get("/status/")
-async def read_system_status(current_user: User = Depends(get_current_user)):
-    return {"status": "ok"}
