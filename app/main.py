@@ -1,9 +1,9 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from . import models
 from .database import engine
-from .routers import user, ai, userai, authentication, files
+from .routers import user, ai, userai, authentication, files, auth
 from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi_utils.tasks import repeat_every
@@ -50,6 +50,7 @@ app.include_router(user.router)
 app.include_router(ai.router)
 app.include_router(files.router)
 app.include_router(userai.router)
+app.include_router(auth.router)
 
 #delete files that haven't been accessed in 24h, checked every 24h since server start
 @app.on_event("startup")
@@ -93,7 +94,7 @@ async def file_cleanup():
         print("error")
 
 @app.get("/")
-async def main():
+def landing_page():
     content = """
         <head>
             <link rel="icon" href="static/favicon.ico" />
