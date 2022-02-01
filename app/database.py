@@ -2,11 +2,29 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHAMY_DATABASE_URL = 'mysql+mysqlconnector://root:1875mdfm@localhost:3306/fmdeploy_db'
+user_name = "user"
+password = "2f2kir2y49xy6g"
+host = "db"  
+database_name = "fmdeploy_db"
 
-engine = create_engine(SQLALCHAMY_DATABASE_URL) #, echo=true
+DATABASE = 'mysql://%s:%s@%s/%s?charset=utf8' % (
+    user_name,
+    password,
+    host,
+    database_name,
+)
 
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False,)
+engine = create_engine(
+    DATABASE,
+    encoding="utf-8",
+    echo=True
+)
+
+""" SQLALCHAMY_DATABASE_URL = 'mysql+mysqlconnector://root:1875mdfm@localhost:3306/fmdeploy_db'
+
+engine = create_engine(SQLALCHAMY_DATABASE_URL) #, echo=true """
+
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 Base = declarative_base()
 

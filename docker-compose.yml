@@ -1,23 +1,39 @@
-# docker-compose.yml
-
-version: '3.8'
 
 services:
-  web:
-    build: .
-    command: bash -c 'uvicorn app.main:app --host 0.0.0.0'
-    volumes:
-      - .:/code
-    expose:  # new
-      - 8000
-    labels: # new
-      - "traefik.enable=true"
-      - "traefik.http.routers.fastapi.rule=Host(`fastapi.localhost`)"
-  traefik: # new
-    image: traefik:v2.2
+  # MySQL
+  db:
+    container_name: "db"
+    build: ./docker/mysql
+    restart: always
+    tty: true
+    environment:
+      MYSQL_DATABASE: fmdeploy_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 2f2kir2y49xy6g 
+      MYSQL_ROOT_PASSWORD: 2f2kir2y49xy6g 
     ports:
-      - 8008:80
-      - 8081:8080
+      - 3307:3306
     volumes:
-      - "./traefik.dev.toml:/etc/traefik/traefik.toml"
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - ./docker/mysql/initdb.d:/docker-entrypoint-initdb.d
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d
+      - ./log/mysql:/var/log/mysql 
+    networks:
+      - local-net
+
+  api:
+    links:
+        - db
+    container_name: "api"
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    volumes:
+      - ./code:/usr/src/server
+    networks:
+      - local-net
+    ports:  
+      - 8000:8000
+
+networks:
+  local-net:
+    driver: bridge
