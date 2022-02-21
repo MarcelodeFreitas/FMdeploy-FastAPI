@@ -12,7 +12,7 @@ from .. import models
 
 router = APIRouter(
     prefix="/auth",
-    tags=['New Authentication']
+    tags=['Authentication with scopes (FUTURE WORK)']
 )
 
 #__________________________CONSTANTS______________________

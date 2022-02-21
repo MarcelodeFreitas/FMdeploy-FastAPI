@@ -1,15 +1,18 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from . import models
 from .database import engine
-from .routers import user, ai, userai, authentication, files, auth
+from .routers import user, ai, userai, authentication, files, auth, jwtauth
 from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi_utils.tasks import repeat_every
 import os
 import time
 import shutil
+
+from fastapi_jwt_auth.exceptions import AuthJWTException
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
@@ -50,7 +53,9 @@ app.include_router(user.router)
 app.include_router(ai.router)
 app.include_router(files.router)
 app.include_router(userai.router)
-app.include_router(auth.router)
+#commented to not interfere with current auth implementation
+#app.include_router(auth.router)
+#app.include_router(jwtauth.router)
 
 #delete files that haven't been accessed in 24h, checked every 24h since server start
 @app.on_event("startup")
@@ -160,3 +165,11 @@ def landing_page():
         </body>
     """
     return HTMLResponse(content=content)
+
+#part of jwt authentication
+""" @app.exception_handler(AuthJWTException)
+def authjwt_exception_handler(request: Request, exc: AuthJWTException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.message}
+    ) """
