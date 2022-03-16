@@ -1,8 +1,8 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
-from .. import schemas, models
-from . import project, user, files, userproject
+from .. import models
+from . import project, user, userproject
 
 def check_access_exception(user_id: int, project_id: str, db):
     entry = db.query(models.UserProject).where(models.UserProject.fk_user_id == user_id).where(models.UserProject.fk_project_id == project_id).first()
@@ -23,12 +23,25 @@ def check_owner(user_id: int, project_id: str, db):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"User id: {user_id}, project id: {project_id} is not the owner!")
     return entry
 
-def get_owner(project_id: str, db):
-    user = db.query(models.User).where(and_(models.UserProject.fk_project_id == project_id, models.UserProject.owner == True)).outerjoin(models.UserProject).first()
-    if not user:
+def check_owner_exposed(user_email: str, project_id: str, db):
+    #check if project exists
+    project.get_by_id(project_id, db)
+    user_id = user.get_by_email(user_email, db).user_id
+    entry = db.query(models.UserProject).where(models.UserProject.fk_user_id == user_id).where(models.UserProject.fk_project_id == project_id).with_entities(models.UserProject.owner).first()
+    if not entry:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"User: {user_email}, project id: {project_id} is not the owner!")
+    return entry
+
+def get_owner(user_email: str, project_id: str, db):
+    #get user id from user email
+    user_id = user.get_by_email(user_email, db).user_id
+    #check if the user has access to the projects
+    check_access_exception(user_id, project_id, db)
+    user_query = db.query(models.User).where(and_(models.UserProject.fk_project_id == project_id, models.UserProject.owner == True)).outerjoin(models.UserProject).with_entities(models.User.name).first()
+    if not user_query:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"error get_owner!")
-    return user
+    return user_query
 
 def is_owner_bool(user_email: str, project_id: str, db):
     user_id = user.get_by_email(user_email, db).user_id
@@ -55,7 +68,7 @@ def owned(current_user_email: str, db: Session):
     #check the user exists
     user_id = user.get_by_email(current_user_email, db).user_id
     #get entries where user is the owner from UserProject
-    userproject = db.query(models.UserProject, models.Project, models.User).where(models.UserProject.fk_user_id == user_id).where(models.UserProject.owner == True).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.created_in, models.Project.author, models.Project.title, models.Project.project_id, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private, models.User.name).all()
+    userproject = db.query(models.UserProject, models.Project, models.User).where(models.UserProject.fk_user_id == user_id).where(models.UserProject.owner == True).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.created_in, models.Project.title, models.Project.project_id, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private, models.User.name).all()
     if not userproject:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"User {current_user_email}, does not own any Project!")
@@ -172,7 +185,7 @@ def shared_projects_exposed(current_user_email: str, db: Session):
     #check the user exists
     user_id = user.get_by_email(current_user_email, db).user_id
     #get entries where user is the beneficiary from UserProject
-    userproject = db.query(models.UserProject, models.Project, models.User).where(models.UserProject.fk_user_id == user_id).where(models.UserProject.owner == False).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.created_in, models.Project.author, models.Project.title, models.Project.project_id, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private).all()
+    userproject = db.query(models.UserProject, models.Project, models.User).where(models.UserProject.fk_user_id == user_id).where(models.UserProject.owner == False).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.project_id, models.Project.title, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private, models.Project.created_in, models.Project.last_updated).all()
     if not userproject:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"User {current_user_email}, does not have any shared Project!")

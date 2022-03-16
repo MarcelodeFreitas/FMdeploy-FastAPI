@@ -18,7 +18,7 @@ class Project(BaseModel):
 
 class ShowProject(BaseModel):
     project_id: str
-    author: str
+    name: str
     title: str
     description: Optional[str] = None
     input_type: str
@@ -28,6 +28,16 @@ class ShowProject(BaseModel):
     last_updated: Optional[datetime] = None
     class Config():
         orm_mode = True
+        
+class ShowSharedProject(BaseModel):
+    project_id: str
+    title: str
+    description: Optional[str] = None
+    input_type: str
+    output_type: str
+    is_private: bool
+    created_in: datetime 
+    last_updated: Optional[datetime] = None
 
 class CreateProject(BaseModel):
     user_id: int
@@ -105,18 +115,13 @@ class UpdateUser(BaseModel):
     class Config():
         orm_mode = True
 
-class UserProject(BaseModel):
-    user_project_list_id: int
-    fk_user_id: int
-    fk_project_id: str
-    owner: bool
-    class Config():
-        orm_mode = True
-
 class Owner(BaseModel):
     owner: bool
     class Config():
         orm_mode = True
+        
+class ShowOwner(BaseModel):
+    name: str
 
 class ModelFile(BaseModel):
     model_file_id: int

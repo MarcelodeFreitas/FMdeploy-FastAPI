@@ -4,7 +4,7 @@ from . import schemas
 
 SECRET_KEY = "4usBQ5fRiHr7gbcpPVUcoHwIcGL8mSDv"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 3000
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 def create_access_token(data: dict):
     to_encode = data.copy()

@@ -30,7 +30,6 @@ class UserProject(Base):
 class Project(Base):
     __tablename__ = 'project'
     project_id = Column(String(length=255), primary_key=True, index=True)
-    author = Column(String(length=255), nullable=False)
     title = Column(String(length=255), nullable=False)
     description = Column(String(length=255), nullable=False)
     input_type = Column(String(length=255), nullable=False)

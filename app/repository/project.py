@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status, UploadFile, File
+from fastapi import HTTPException, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from .. import schemas, models
@@ -25,7 +25,9 @@ def get_all_exposed(user_email: str, db: Session):
     #check if admin
     user.is_admin(user_email, db)
     #list all projects
-    project_list = db.query(models.Project).all()
+    """ project_list = db.query(models.Project).all() """
+    user_id = user.get_by_email(user_email, db).user_id
+    project_list = db.query(models.UserProject, models.Project, models.User).where(models.UserProject.owner == True).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.project_id, models.User.name, models.Project.title, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private, models.Project.created_in, models.Project.last_updated).all()
     if not project_list:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"No projects found in the database!")
@@ -33,7 +35,7 @@ def get_all_exposed(user_email: str, db: Session):
 
 # get all the public projects from the database
 def get_all_public(db: Session):
-    project_list =  db.query(models.Project).where(models.Project.is_private.is_(False)).all()
+    project_list = db.query(models.UserProject, models.Project, models.User).where(models.Project.is_private.is_(False)).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.project_id, models.User.name, models.Project.title, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private, models.Project.created_in, models.Project.last_updated).all()
     if not project_list:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"No public projects found in the database!")
@@ -41,16 +43,24 @@ def get_all_public(db: Session):
 
 # get all public projects from database for external use by admin
 def get_public_by_id_exposed(project_id: str, db: Session):
-    project =  db.query(models.Project).where(models.Project.is_private.is_(False)).filter(models.Project.project_id == project_id).first()
+    project = db.query(models.UserProject, models.Project, models.User).where(models.Project.project_id == project_id).where(models.Project.is_private.is_(False)).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.project_id, models.User.name, models.Project.title, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private, models.Project.created_in, models.Project.last_updated).first()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"Project with id number {project_id} was not found in Public Projects!")
     return project
 
 def get_public_by_title_exposed(title: str, db: Session):
-    project = db.query(models.Project).where(models.Project.is_private.is_(False)).filter(models.Project.title.like(f"%{title}%")).all()
+    project = db.query(models.UserProject, models.Project, models.User).where(models.Project.is_private.is_(False)).filter(models.Project.title.like(f"%{title}%")).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.project_id, models.User.name, models.Project.title, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private, models.Project.created_in, models.Project.last_updated).all()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project with title: {title} was not found!")
+    return project
+
+def get_by_id( project_id: str, db: Session):
+    #get project and author by project id
+    project = db.query(models.UserProject, models.Project, models.User).where(models.UserProject.owner == True).where(models.Project.project_id == project_id).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.project_id, models.User.name, models.Project.title, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private, models.Project.created_in, models.Project.last_updated).first()
+    if not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+         detail=f"Project with id number {project_id} was not found!")
     return project
 
 def get_by_id_exposed(user_email: str, project_id: str, db: Session):
@@ -59,23 +69,24 @@ def get_by_id_exposed(user_email: str, project_id: str, db: Session):
     if not ((user.is_admin_bool(user_email, db)) or (userproject.is_owner_bool(user_email, project_id, db))):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
          detail=f"User with email: {user_email} does not have permissions to see Project id: {project_id}!")
-    #get project by id
-    project = db.query(models.Project).filter(models.Project.project_id == project_id).first()
+    #get project and author by project id
+    project = db.query(models.UserProject, models.Project, models.User).where(models.UserProject.owner == True).where(models.Project.project_id == project_id).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.project_id, models.User.name, models.Project.title, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private, models.Project.created_in, models.Project.last_updated).first()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"Project with id number {project_id} was not found!")
     return project
 
-def get_by_title(title: str, db: Session):
-    project = db.query(models.Project).filter(models.Project.title.like(f"%{title}%")).all()
-    if not project:
+def get_by_title_exposed(user_email: str, title: str, db: Session):
+    #check if admin
+    user.is_admin(user_email, db)
+    project_list = db.query(models.UserProject, models.Project, models.User).where(models.UserProject.owner == True).filter(models.Project.title.like(f"%{title}%")).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.project_id, models.User.name, models.Project.title, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private, models.Project.created_in, models.Project.last_updated).all()
+    if not project_list:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project with title: {title} was not found!")
-    return project
+    return project_list
 
-""" def get_by_title_exposed"""
 
-def create_project_entry(project_id: str, author: str, request: schemas.CreateProject, db: Session):
-    new_project = models.Project(project_id = project_id, author=author, title=request.title, description=request.description, input_type=request.input_type, output_type=request.output_type, is_private=request.is_private, created_in=datetime.now())
+def create_project_entry(project_id: str, request: schemas.CreateProject, db: Session):
+    new_project = models.Project(project_id = project_id, title=request.title, description=request.description, input_type=request.input_type, output_type=request.output_type, is_private=request.is_private, created_in=datetime.now())
     try:
         db.add(new_project)
         db.commit()
@@ -98,7 +109,7 @@ def create_by_admin(user_email: str, request: schemas.CreateProject, db: Session
 def create_by_current(request: schemas.CreateProject, user_email: str, db: Session):
     project_id = str(uuid.uuid4().hex)
     user_object = user.get_by_email(user_email, db)
-    create_project_entry(project_id, user_object.name, request, db)
+    create_project_entry(project_id, request, db)
     userproject.create_project_user_entry(user_object.user_id, project_id, db)
     return {"project_id": project_id}
 
@@ -122,38 +133,14 @@ def check_public_by_id(project_id: str, db: Session):
         return False
     return True
 
-async def run_by_admin(current_user_email: str, user_id: int, project_id: str, input_file_id: str, db: Session):
+async def run(user_email: str, project_id: str, input_file_id: str, db: Session):
     #check permissions
-    user.is_admin(current_user_email, db)
+    #check if owner or admin
+    if not ((user.is_admin_bool(user_email, db)) or (userproject.is_owner_bool(user_email, project_id, db))):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+         detail=f"User with email: {user_email} does not have permissions to see Project id: {project_id}!")
     #check if the user id provided exists
-    user.get_by_id(user_id, db)
-    #check if the project id provided exists
-    get_by_id(project_id, db)
-    #check if the project model is public
-    if not check_public_by_id(project_id, db):
-        #check if the user has access to this project model
-        #by checking the userailist table
-        userproject.check_access_exception(user_id, project_id, db)
-    #check if input file exists
-    input_file = files.check_input_file(input_file_id, db)
-    #check if the project table has python script paths
-    #check that the python script files exist in the filesystem
-    python_file = check_python_files(project_id, db)
-    #check if the table modelfile has files associated with this project model
-    #check if those files exist in the file system
-    model_files = files.check_model_files(project_id, db)
-    # run the project model
-    output_file_path = run_script(project_id, python_file, model_files, input_file)
-    #check if result file exists
-    if not os.path.isfile(output_file_path):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"There is no output file at: {output_file_path}!")
-    
-    return FileResponse(output_file_path, media_type="application/gzip", filename="result_" + input_file.name)
-
-async def run(current_user_email: str, project_id: str, input_file_id: str, db: Session):
-    #check if the user id provided exists
-    user_id = user.get_by_email(current_user_email, db).user_id
+    user_id = user.get_by_email(user_email, db).user_id
     #check if the project id provided exists
     model = get_by_id(project_id, db)
     print("hereeeee:" + model.input_type + model.output_type)

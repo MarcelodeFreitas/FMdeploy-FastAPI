@@ -10,20 +10,11 @@ router = APIRouter(
     tags=['User Project']
 )
 
+@router.post("/owner/{project_id}", status_code = status.HTTP_200_OK, response_model=schemas.Owner)
+def check_if_owner(project_id: str, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return userproject.check_owner_exposed(get_current_user, project_id, db)
 
-@router.post("/check_access", status_code = status.HTTP_200_OK, response_model=schemas.UserProject)
-def check_access_to_project(request: schemas.UserProject, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return userproject.check_access_exception(request.user_id, request.project_id, db)
-
-@router.post("/check_access/bool", status_code = status.HTTP_200_OK, response_model=schemas.Owner)
-def check_access_to_project_boolean(request: schemas.UserProject, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return {"owner": userproject.check_access(request.user_id, request.project_id, db)}
-
-@router.post("/owner", status_code = status.HTTP_200_OK, response_model=schemas.Owner)
-def check_if_owner(request: schemas.UserProject, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return userproject.check_owner(request.user_id, request.project_id, db)
-
-@router.get("/owned_list", status_code = status.HTTP_200_OK)
+@router.get("/owned_list", status_code = status.HTTP_200_OK, response_model=List[schemas.ShowProject])
 def get_list_of_projects_owned_by_user(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return userproject.owned(get_current_user, db)
 
@@ -39,7 +30,7 @@ def cancel_share_project(request: schemas.ShareProject, db: Session = Depends(ge
 def check_if_project_is_shared_with_user(request: schemas.UserProject, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return userproject.check_shared(request.user_id, request.project_id, db)
 
-@router.get("/shared_list", status_code = status.HTTP_200_OK)
+@router.get("/shared_list", status_code = status.HTTP_200_OK, response_model=List[schemas.ShowSharedProject])
 def get_list_of_projects_shared_with_user(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return userproject.shared_projects_exposed(get_current_user, db)
 
@@ -51,6 +42,6 @@ def get_list_of_beneficiaries_by_project(project_id: str, db: Session = Depends(
 def get_list_of_projects_shared_with_user_id(user_id: int, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return userproject.shared_projects(user_id, db)
 
-@router.get('/test/{project_id}', status_code = status.HTTP_202_ACCEPTED)
-def test(project_id:str, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return userproject.get_owner(project_id, db)
+@router.get('/get_owner/{project_id}', status_code = status.HTTP_202_ACCEPTED, response_model=schemas.ShowOwner)
+def get_owner_name_by_project_id(project_id: str, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
+    return userproject.get_owner(get_current_user, project_id, db)
