@@ -1,42 +1,42 @@
 from fastapi import HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
-from .. import schemas, models
+from .. import models
 from typing import List
 import uuid
 import os
 import shutil
-from . import user, userai
+from . import user, userproject
 import sys
 import importlib
 
-def check_model_files(ai_id: str, db: Session):
-    modelfiles = db.query(models.ModelFile).where(models.ModelFile.fk_ai_id == ai_id).all()
-    modelfiles_name_path = db.query(models.ModelFile).where(models.ModelFile.fk_ai_id == ai_id).with_entities(models.ModelFile.name, models.ModelFile.path).all()
+def check_model_files(project_id: str, db: Session):
+    modelfiles = db.query(models.ModelFile).where(models.ModelFile.fk_project_id == project_id).all()
+    modelfiles_name_path = db.query(models.ModelFile).where(models.ModelFile.fk_project_id == project_id).with_entities(models.ModelFile.name, models.ModelFile.path).all()
     if not modelfiles:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"AI model with id number {ai_id} has no model files!")
+         detail=f"Project with id number {project_id} has no model files!")
     for modelfile in modelfiles:   
         if modelfile.path == None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"AI model with id number {ai_id} does not have model files!")
+            detail=f"Project with id number {project_id} does not have model files!")
         if os.path.isfile(modelfile.path) == False:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"AI model with id number: {ai_id}, path: {modelfile.path}, does not exist in the filesystem !")
+            detail=f"Project with id number: {project_id}, path: {modelfile.path}, does not exist in the filesystem !")
     return modelfiles_name_path
 
-def check_model_files_bool(ai_id: str, db: Session):
-    modelfiles = db.query(models.ModelFile).where(models.ModelFile.fk_ai_id == ai_id).all()
+def check_model_files_bool(project_id: str, db: Session):
+    modelfiles = db.query(models.ModelFile).where(models.ModelFile.fk_project_id == project_id).all()
     if modelfiles:
         return True
     else:
         return False
 
-def delete_model_files(ai_id: str, db: Session):
-    modelfiles = db.query(models.ModelFile).where(models.ModelFile.fk_ai_id == ai_id).all()
+def delete_model_files(project_id: str, db: Session):
+    modelfiles = db.query(models.ModelFile).where(models.ModelFile.fk_project_id == project_id).all()
     if not modelfiles:
         return True
         """ raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"AI model with id number {ai_id} has no model files in database!") """
+         detail=f"Project with id number {project_id} has no model files in database!") """
     try:
         for modelfile in modelfiles:
             """ modelfile.delete(synchronize_session=False) """
@@ -44,7 +44,7 @@ def delete_model_files(ai_id: str, db: Session):
         db.commit()
     except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"AI model files with id number {ai_id} error deleting from database!")
+         detail=f"Project files with id number {project_id} error deleting from database!")
     return True
 
 async def create_input_file(db: Session, input_file: UploadFile = File(...)):
@@ -84,43 +84,43 @@ def check_input_file(input_file_id: str, db: Session):
         detail=f"Input file with id number: {input_file_id}, path: {input_file.path}, does not exist in the filesystem !")
     return inputfile_name_path
 
-async def create_python_script(current_user_email: str, ai_id: str, db: Session, python_file: UploadFile = File(...)):
+async def create_python_script(current_user_email: str, project_id: str, db: Session, python_file: UploadFile = File(...)):
     #check permissions
     #check if owner or admin
-    if not ((user.is_admin_bool(current_user_email, db)) or (userai.is_owner_bool(current_user_email, ai_id, db))):
+    if not ((user.is_admin_bool(current_user_email, db)) or (userproject.is_owner_bool(current_user_email, project_id, db))):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-         detail=f"User with email: {current_user_email} does not have permissions to update AI model id: {ai_id}!")
+         detail=f"User with email: {current_user_email} does not have permissions to update Project id: {project_id}!")
 
     file_name = python_file.filename
-    file_path = "./modelfiles/" + ai_id + "/" + file_name
+    file_path = "./modelfiles/" + project_id + "/" + file_name
 
-    ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
+    project = db.query(models.Project).filter(models.Project.project_id == project_id)
     #check if provided model_id is valid
-    if not ai.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
+    if not project.first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project with id {project_id} not found!")
     #check if model already has python script
-    if ai.first().python_script_path != None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {ai_id} already has a python script!")
-    #try to update ai data fields related to python script
+    if project.first().python_script_path != None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project id {project_id} already has a python script!")
+    #try to update project data fields related to python script
     try:
-        ai.update({"python_script_name": file_name, "python_script_path": file_path })
+        project.update({"python_script_name": file_name, "python_script_path": file_path })
         db.commit()
     except:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {ai_id} database update error!")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project id {project_id} database update error!")
     #try to write python script to filesystem
     try:
-        os.makedirs("./modelfiles/" + ai_id, exist_ok=True)
+        os.makedirs("./modelfiles/" + project_id, exist_ok=True)
         with open(f"{file_path}", "wb") as buffer:
             shutil.copyfileobj(python_file.file, buffer)  
     except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {file_name} filesystem write error!")
     #check if the python script saved is valid
-    validate_python_script(ai_id, file_name)
+    validate_python_script(project_id, file_name)
 
-    return HTTPException(status_code=status.HTTP_200_OK, detail=f"The file named {file_name} was successfully submited to model id number {ai_id}.")
+    return HTTPException(status_code=status.HTTP_200_OK, detail=f"The file named {file_name} was successfully submited to model id number {project_id}.")
 
-def validate_python_script(ai_id: str, script_name: str):
-    path = "./modelfiles/" + ai_id
+def validate_python_script(project_id: str, script_name: str):
+    path = "./modelfiles/" + project_id
     print("file_name: ", script_name)
     script_name_without_extension = script_name[0:-3]
     # add folder path to sys
@@ -140,34 +140,34 @@ def validate_python_script(ai_id: str, script_name: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {script_name} is missing the functions 'load_models', 'run' or both!") """
         
 
-async def create_model_files(current_user_email: str, ai_id: str, db: Session, model_files: List[UploadFile] = File(...)):
+async def create_model_files(current_user_email: str, project_id: str, db: Session, model_files: List[UploadFile] = File(...)):
     #check permissions
     #check if owner or admin
-    if not ((user.is_admin_bool(current_user_email, db)) or (userai.is_owner_bool(current_user_email, ai_id, db))):
+    if not ((user.is_admin_bool(current_user_email, db)) or (userproject.is_owner_bool(current_user_email, project_id, db))):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-         detail=f"User with email: {current_user_email} does not have permissions to update AI model id: {ai_id}!")
+         detail=f"User with email: {current_user_email} does not have permissions to update Project id: {project_id}!")
 
     for model_file in model_files:
         file_name = model_file.filename
-        file_path = "./modelfiles/" + ai_id + "/" + file_name
+        file_path = "./modelfiles/" + project_id + "/" + file_name
 
-        ai = db.query(models.AI).filter(models.AI.ai_id == ai_id)
+        project = db.query(models.Project).filter(models.Project.project_id == project_id)
         #check if provided model_id is valid
-        if not ai.first():
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model with id {ai_id} not found!")
+        if not project.first():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project with id {project_id} not found!")
         #create a new entry in the table model file
         try:
-            new_modelfile = models.ModelFile(fk_ai_id=ai_id, name=file_name, path=file_path)
+            new_modelfile = models.ModelFile(fk_project_id=project_id, name=file_name, path=file_path)
             db.add(new_modelfile)
             db.commit()
         except:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"AI model id {ai_id} database commit error!")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project id {project_id} database commit error!")
         #try to write python script top filesystem
         try:
-            os.makedirs("./modelfiles/" + ai_id, exist_ok=True)
+            os.makedirs("./modelfiles/" + project_id, exist_ok=True)
             with open(f"{file_path}", "wb") as buffer:
                 shutil.copyfileobj(model_file.file, buffer)  
         except:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"File named {file_name} filesystem write error!")
 
-    return HTTPException(status_code=status.HTTP_200_OK, detail=f"Files successfully submited to model id number {ai_id}.")
+    return HTTPException(status_code=status.HTTP_200_OK, detail=f"Files successfully submited to model id number {project_id}.")

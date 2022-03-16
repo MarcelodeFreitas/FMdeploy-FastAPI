@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from .. import models, hashing
-from . import ai
+from . import project
 
 #get user by id for internal use
 def get_by_id(user_id: int, db: Session):
@@ -164,15 +164,15 @@ def delete_current_account(current_user_email: str, db: Session):
     user = get_by_email(current_user_email, db)
     user_id = user.user_id
     try:
-        #list ai
-        ai_list = db.query(models.UserAIList).where(models.UserAIList.fk_user_id == user_id).where(models.UserAIList.owner == True).all()
-        #delete all ai models owned by the user
-        if len(ai_list) > 0:
-            for ai_model in ai_list:
-                ai.delete(current_user_email, ai_model.fk_ai_id, db)
+        #list project
+        project_list = db.query(models.UserProject).where(models.UserProject.fk_user_id == user_id).where(models.UserProject.owner == True).all()
+        #delete all Project owned by the user
+        if len(project_list) > 0:
+            for project_model in project_list:
+                project.delete(current_user_email, project_model.fk_project_id, db)
     except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"Error deleting ai models and files for user with email: {current_user_email} !")
+         detail=f"Error deleting Project and files for user with email: {current_user_email} !")
     #delete user from user and userailist tables
     delete_by_email(current_user_email, db)
     return HTTPException(status_code=status.HTTP_200_OK, 
