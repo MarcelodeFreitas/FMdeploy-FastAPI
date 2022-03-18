@@ -65,8 +65,9 @@ def get_by_id( project_id: str, db: Session):
 
 def get_by_id_exposed(user_email: str, project_id: str, db: Session):
     #check permissions
-    #check if owner or admin
-    if not ((user.is_admin_bool(user_email, db)) or (userproject.is_owner_bool(user_email, project_id, db))):
+    #check if owner or admin or beneficiary
+    user_id = user.get_by_email(user_email, db).user_id
+    if not ((user.is_admin_bool(user_email, db)) or (userproject.is_owner_bool(user_email, project_id, db)) or (userproject.check_access(user_id, project_id, db))):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
          detail=f"User with email: {user_email} does not have permissions to see Project id: {project_id}!")
     #get project and author by project id
@@ -134,21 +135,19 @@ def check_public_by_id(project_id: str, db: Session):
     return True
 
 async def run(user_email: str, project_id: str, input_file_id: str, db: Session):
-    #check permissions
-    #check if owner or admin
-    if not ((user.is_admin_bool(user_email, db)) or (userproject.is_owner_bool(user_email, project_id, db))):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-         detail=f"User with email: {user_email} does not have permissions to see Project id: {project_id}!")
     #check if the user id provided exists
     user_id = user.get_by_email(user_email, db).user_id
     #check if the project id provided exists
     model = get_by_id(project_id, db)
-    print("hereeeee:" + model.input_type + model.output_type)
-    #check if the project model is public
+    #check permissions
     if not check_public_by_id(project_id, db):
-        #check if the user has access to this project model
-        #by checking the userailist table
-        userproject.check_access_exception(user_id, project_id, db)
+    #check if the project is public
+    #check if owner or admin or beneficiary
+        user_id = user.get_by_email(user_email, db).user_id
+        if not ((user.is_admin_bool(user_email, db)) or (userproject.is_owner_bool(user_email, project_id, db)) or (userproject.check_access(user_id, project_id, db))):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"User with email: {user_email} does not have permissions to see Project id: {project_id}!") 
+    print("hereeeee:" + model.input_type + model.output_type)
     #check if input file exists
     input_file = files.check_input_file(input_file_id, db)
     input_file_name_no_extension = input_file.name.split(".")[0]
