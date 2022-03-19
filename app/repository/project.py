@@ -65,11 +65,13 @@ def get_by_id( project_id: str, db: Session):
 
 def get_by_id_exposed(user_email: str, project_id: str, db: Session):
     #check permissions
-    #check if owner or admin or beneficiary
-    user_id = user.get_by_email(user_email, db).user_id
-    if not ((user.is_admin_bool(user_email, db)) or (userproject.is_owner_bool(user_email, project_id, db)) or (userproject.check_access(user_id, project_id, db))):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-         detail=f"User with email: {user_email} does not have permissions to see Project id: {project_id}!")
+    #check if the project is public
+    if not check_public_by_id_bool(project_id, db):
+        #check if owner or admin or beneficiary
+        user_id = user.get_by_email(user_email, db).user_id
+        if not ((user.is_admin_bool(user_email, db)) or (userproject.is_owner_bool(user_email, project_id, db)) or (userproject.check_access(user_id, project_id, db))):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"User with email: {user_email} does not have permissions to see Project id: {project_id}!")
     #get project and author by project id
     project = db.query(models.UserProject, models.Project, models.User).where(models.UserProject.owner == True).where(models.Project.project_id == project_id).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.project_id, models.User.name, models.Project.title, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private, models.Project.created_in, models.Project.last_updated).first()
     if not project:
@@ -128,7 +130,7 @@ def get_query_by_id(project_id: str, db: Session):
          detail=f"Project with id number {project_id} was not found!")
     return project
 
-def check_public_by_id(project_id: str, db: Session):
+def check_public_by_id_bool(project_id: str, db: Session):
     project =  db.query(models.Project).where(models.Project.is_private.is_(False)).filter(models.Project.project_id == project_id).first()
     if not project:
         return False
@@ -140,8 +142,8 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
     #check if the project id provided exists
     model = get_by_id(project_id, db)
     #check permissions
-    if not check_public_by_id(project_id, db):
     #check if the project is public
+    if not check_public_by_id_bool(project_id, db):
     #check if owner or admin or beneficiary
         user_id = user.get_by_email(user_email, db).user_id
         if not ((user.is_admin_bool(user_email, db)) or (userproject.is_owner_bool(user_email, project_id, db)) or (userproject.check_access(user_id, project_id, db))):
