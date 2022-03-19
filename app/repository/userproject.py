@@ -101,7 +101,7 @@ def share_exposed(current_user_email: str, beneficiary_email: str, project_id: s
     if (current_user_email == beneficiary_email):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
          detail=f"A project can't be shared with the owner")
-    #check the ai model exists
+    #check if the project exists
     project_object = project.get_by_id(project_id, db)
     if not (project_object.is_private):
        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -212,5 +212,5 @@ def check_beneficiaries(project_id: str, current_user_email: str, db: Session):
     userproject = db.query(models.UserProject, models.User).where(models.UserProject.fk_project_id == project_id).where(models.UserProject.owner == False).outerjoin(models.User).with_entities(models.User.name, models.User.email).all()
     if not userproject:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"The Project Model id: {project_id} has not been shared!")
+         detail=f"The Project id: {project_id} has not been shared!")
     return userproject

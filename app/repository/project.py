@@ -140,7 +140,7 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
     #check if the user id provided exists
     user_id = user.get_by_email(user_email, db).user_id
     #check if the project id provided exists
-    model = get_by_id(project_id, db)
+    project = get_by_id(project_id, db)
     #check permissions
     #check if the project is public
     if not check_public_by_id_bool(project_id, db):
@@ -149,71 +149,65 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
         if not ((user.is_admin_bool(user_email, db)) or (userproject.is_owner_bool(user_email, project_id, db)) or (userproject.check_access(user_id, project_id, db))):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
             detail=f"User with email: {user_email} does not have permissions to see Project id: {project_id}!") 
-    print("hereeeee:" + model.input_type + model.output_type)
+    print("input type:", project.input_type, "output type", project.output_type)
     #check if input file exists
     input_file = files.check_input_file(input_file_id, db)
     input_file_name_no_extension = input_file.name.split(".")[0]
     #check if the project table has python script paths
     #check that the python script files exist in the filesystem
     python_file = check_python_files(project_id, db)
-    print("WARNING: ", files.check_model_files_bool(project_id, db))
-    #check if this is an Project Model with or without model files
+    print("CHECK MODEL FILES EXIST: ", files.check_model_files_bool(project_id, db))
+    #check if this is a Project with or without modelfiles
     if files.check_model_files_bool(project_id, db):
-        #check if the table modelfile has files associated with this project model
+        #check if the table modelfile has files associated with this project
         #check if those files exist in the file system
         model_files = files.check_model_files(project_id, db)
         try:
-            # run the project model
+            # run the project
             output_file_path = run_script(project_id, python_file, model_files, input_file)
             #check if result file exists
-            print("output file path hereeee:" + output_file_path + model.output_type)
-            if not os.path.isfile(output_file_path + model.output_type):
+            print("OUTPUT FILE PATH:" + output_file_path + project.output_type)
+            if not os.path.isfile(output_file_path + project.output_type):
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                 detail="There is no output file!")
-            if (model.output_type == ".nii.gz"):
-                return FileResponse(output_file_path + model.output_type, media_type="application/gzip", filename="result_" + input_file_name_no_extension + model.output_type)
-            elif (model.output_type == ".csv"):
-                return FileResponse(output_file_path + model.output_type, media_type="text/csv", filename="result_" + input_file_name_no_extension + model.output_type)
-            elif (model.output_type == ".png"):
-                return FileResponse(output_file_path + model.output_type, media_type="image/png", filename="result_" + input_file_name_no_extension + model.output_type)
-            elif (model.output_type == ".wav"):
-                return FileResponse(output_file_path + model.output_type, media_type="audio/wav", filename="result_" + input_file_name_no_extension + model.output_type)
+            if (project.output_type == ".nii.gz"):
+                return FileResponse(output_file_path + project.output_type, media_type="application/gzip", filename="result_" + input_file_name_no_extension + project.output_type)
+            elif (project.output_type == ".csv"):
+                return FileResponse(output_file_path + project.output_type, media_type="text/csv", filename="result_" + input_file_name_no_extension + project.output_type)
+            elif (project.output_type == ".png"):
+                return FileResponse(output_file_path + project.output_type, media_type="image/png", filename="result_" + input_file_name_no_extension + project.output_type)
+            elif (project.output_type == ".wav"):
+                return FileResponse(output_file_path + project.output_type, media_type="audio/wav", filename="result_" + input_file_name_no_extension + project.output_type)
         except:
-            error = logging.exception("run_script error: ")
-            print(error)
-            """ raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Script error") """
             log_path = "./outputfiles/" + input_file.input_file_id + "/" + python_file.python_script_name[0:-3] + ".log"
             if not os.path.isfile(log_path):
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
                 detail="There is no error log file!")
-            return FileResponse(log_path, media_type="text/plain", filename=python_file.python_script_name[0:-3] + "_error_log")
-        
+            return FileResponse(log_path, media_type="text/plain", filename=python_file.python_script_name[0:-3] + ".log")
+    # if the project has no model files run simple script
     else:
         try:
-            # run the project model
+            # run the project
             output_file_path = run_simple_script(project_id, python_file, input_file)
             #check if result file exists
-            print("output file path hereeee:" + output_file_path + model.output_type)
-            if not os.path.isfile(output_file_path + model.output_type):
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+            print("output file path hereeee:" + output_file_path + project.output_type)
+            if not os.path.isfile(output_file_path + project.output_type):
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="There is no output file!")
-            if (model.output_type == ".nii.gz"):
-                return FileResponse(output_file_path + model.output_type, media_type="application/gzip", filename="result_" + input_file_name_no_extension + model.output_type)
-            elif (model.output_type == ".csv"):
-                return FileResponse(output_file_path + model.output_type, media_type="text/csv", filename="result_" + input_file_name_no_extension + model.output_type)
-            elif (model.output_type == ".png"):
-                return FileResponse(output_file_path + model.output_type, media_type="image/png", filename="result_" + input_file_name_no_extension + model.output_type)
-            elif (model.output_type == ".wav"):
-                return FileResponse(output_file_path + model.output_type, media_type="audio/wav", filename="result_" + input_file_name_no_extension + model.output_type)
+            if (project.output_type == ".nii.gz"):
+                return FileResponse(output_file_path + project.output_type, media_type="application/gzip", filename="result_" + input_file_name_no_extension + project.output_type)
+            elif (project.output_type == ".csv"):
+                return FileResponse(output_file_path + project.output_type, media_type="text/csv", filename="result_" + input_file_name_no_extension + project.output_type)
+            elif (project.output_type == ".png"):
+                return FileResponse(output_file_path + project.output_type, media_type="image/png", filename="result_" + input_file_name_no_extension + project.output_type)
+            elif (project.output_type == ".wav"):
+                return FileResponse(output_file_path + project.output_type, media_type="audio/wav", filename="result_" + input_file_name_no_extension + project.output_type)
         except:
-            error = logging.exception("run_script error: ")
-            print(error)
             log_path = "./outputfiles/" + input_file.input_file_id + "/" + python_file.python_script_name[0:-3] + ".log"
             if not os.path.isfile(log_path):
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="There is no error log file!")
-            return FileResponse(log_path, media_type="text/plain", filename=python_file.python_script_name[0:-3] + "_error_log")
+            return FileResponse(log_path, media_type="text/plain", filename=python_file.python_script_name[0:-3] + ".log")
             
             
 def check_python_files(project_id: str, db: Session):
@@ -255,17 +249,32 @@ def run_script( project_id: str, python_file: dict, model_files: dict, input_fil
     # run "load_models" and "run"
     try:
         logname = output_directory_path + python_script_name + ".log"
-        print(logname)
-        logging.basicConfig(filename=logname,
-                            format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-                            datefmt='%H:%M:%S',
-                            level=logging.DEBUG)
-        print("LOAD MODELS:", script.load_models(model_files))
-        print("RUN:", script.run(input_file_path, output_file_name, output_directory_path))
+        print("LOGNAME: ", logname)
+        log = logging.getLogger()
+        log.setLevel(logging.DEBUG)
+        fh = logging.FileHandler(filename=logname)
+        fh.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(
+                    fmt='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S'
+                    )
+        fh.setFormatter(formatter)
+        log.addHandler(fh)
+        log.info('-------Start--------')
+        load_models = script.load_models(model_files)
+        run_script = script.run(input_file_path, output_file_name, output_directory_path)
+        print("LOAD MODELS:", load_models)
+        log.error(f"LOAD MODELS: {load_models}")
+        print("RUN SCRIPT:", run_script)
+        log.error(f"RUN SCRIPT: {run_script}")
         
     except:
-        error = logging.exception("run_script errors:")
-        print(error)
+        error = log.exception("run_script errors:")
+        print("RUN SCRIPT ERROR:", error)
+        
+    log.info('-------End--------')
+    log.removeHandler(fh)
+    del log,fh
 
     return output_directory_path + output_file_name
 
@@ -293,16 +302,33 @@ def run_simple_script( project_id: str, python_file: dict, input_file: dict):
     # run "load_models" and "run"
     try:
         logname = output_directory_path + python_script_name + ".log"
-        print(logname)
-        logging.basicConfig(filename=logname,
-                            format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-                            datefmt='%H:%M:%S',
-                            level=logging.DEBUG)
-        print("RUN:", script.run(input_file_path, output_file_name, output_directory_path))
+        logname = output_directory_path + python_script_name + ".log"
+        print("LOGNAME: ", logname)
+        log = logging.getLogger()
+        log.setLevel(logging.DEBUG)
+        fh = logging.FileHandler(filename=logname)
+        fh.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(
+                    fmt='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S'
+                    )
+        fh.setFormatter(formatter)
+        log.addHandler(fh)
+        log.info('-------Start--------')
+        load_models = script.load_models(model_files)
+        run_script = script.run(input_file_path, output_file_name, output_directory_path)
+        print("LOAD MODELS:", load_models)
+        log.error(f"LOAD MODELS: {load_models}")
+        print("RUN SCRIPT:", run_script)
+        log.error(f"RUN SCRIPT: {run_script}")
         
     except:
         error = logging.exception("run_simple_script errors:")
         print(error)
+        
+    log.info('-------End--------')
+    log.removeHandler(fh)
+    del log,fh
 
     return output_directory_path + output_file_name
 
@@ -312,7 +338,7 @@ def delete(user_email: str, project_id: str, db: Session):
     #get current user id
     user_id = user.get_by_email(user_email, db).user_id
     #check permissions
-    #only the owner can delete project model
+    #only the owner can delete project
     userproject.check_owner(user_id, project_id, db)
     #delete project from database
     project = db.query(models.Project).filter(models.Project.project_id == project_id)

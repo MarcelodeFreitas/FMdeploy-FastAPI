@@ -98,7 +98,7 @@ async def create_python_script(current_user_email: str, project_id: str, db: Ses
     #check if provided model_id is valid
     if not project.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project with id {project_id} not found!")
-    #check if model already has python script
+    #check if project already has python script
     if project.first().python_script_path != None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project id {project_id} already has a python script!")
     #try to update project data fields related to python script
@@ -155,7 +155,7 @@ async def create_model_files(current_user_email: str, project_id: str, db: Sessi
         #check if provided model_id is valid
         if not project.first():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project with id {project_id} not found!")
-        #create a new entry in the table model file
+        #create a new entry in the table modelfile
         try:
             new_modelfile = models.ModelFile(fk_project_id=project_id, name=file_name, path=file_path)
             db.add(new_modelfile)
