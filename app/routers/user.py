@@ -44,7 +44,7 @@ def get_current_user(db: Session = Depends(get_db), get_current_user: schemas.Us
 #dont forget to require new login
 @router.put('', status_code = status.HTTP_202_ACCEPTED)
 def update_current_user(request: schemas.UpdateUser, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return user.update_by_email(get_current_user, request.new_name, request.new_email, db)
+    return user.update_by_email(get_current_user, request.new_name, request.new_email, request.new_password, db)
 
 #delete user by id for admin
 @router.delete('/admin/id/{user_id}', status_code = status.HTTP_200_OK)

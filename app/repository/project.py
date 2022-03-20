@@ -314,11 +314,8 @@ def run_simple_script( project_id: str, python_file: dict, input_file: dict):
                     )
         fh.setFormatter(formatter)
         log.addHandler(fh)
-        log.info('-------Start--------')
-        load_models = script.load_models(model_files)
+        log.info('-------Start--------')                     
         run_script = script.run(input_file_path, output_file_name, output_directory_path)
-        print("LOAD MODELS:", load_models)
-        log.error(f"LOAD MODELS: {load_models}")
         print("RUN SCRIPT:", run_script)
         log.error(f"RUN SCRIPT: {run_script}")
         

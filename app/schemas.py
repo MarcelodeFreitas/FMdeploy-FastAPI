@@ -112,6 +112,7 @@ class CreateUser(BaseModel):
 class UpdateUser(BaseModel):
     new_name: Optional[str] = None
     new_email: Optional[str] = None
+    new_password: Optional[str] = None
     class Config():
         orm_mode = True
 

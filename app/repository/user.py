@@ -202,28 +202,28 @@ def update_by_id(user_id: int, user_email: str, user_name: str, db: Session):
     detail=f"User with id: {user_id} was successfully updated.")
 
 #update user email or user name by email
-def update_by_email(user_email: str, new_name: str, new_email: str, db: Session):
+def update_by_email(user_email: str, new_name: str, new_email: str, new_password: str, db: Session):
+    print("NAME: ", new_name, "EMAIL: ", new_email, "PASSWORD: ", new_password)
     #check if user exists
     user = get_user_query_by_email(user_email, db)
     #check what data has been provided in the request
-    if (new_email == "" or new_email == None) and (new_name == "" or new_name == None):
+    if (new_email == "" or new_email == None) and (new_name == "" or new_name == None) and (new_password == "" or new_password == None):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-         detail=f"Request user update fields are both empty!")
+         detail=f"Update fields are empty!")
     #if empty keep previous data
-    if new_email == "" or new_email == None:
-        new_email = user.first().email
-    if new_name == "" or new_name == None:
-        new_name = user.first().name
-    #update user in database
-    try:
-        user.update({'name': new_name})
+    
+    if new_email != "" and new_email != None:
         user.update({'email': new_email})
-        db.commit()
-    except:
+    if new_name != "" and new_name != None:
+        user.update({'name': new_name})
+    if new_password != "" and new_password != None:
+        user.update({'password': hashing.Hash.bcrypt(new_password)})
+    db.commit()
+    """ except:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, 
-        detail=f"Email: {user_email}, is already registered!")
+        detail=f"Email: {user_email}, is already registered!") """
     return HTTPException(status_code=status.HTTP_200_OK, 
-    detail=f"User data was successfully updated.")
+    detail=f"User data was successfully updated!")
 
 #get admin if is admin else http exception
 def is_admin(email: str, db):
