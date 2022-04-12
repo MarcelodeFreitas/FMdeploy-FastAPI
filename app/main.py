@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from . import models
 from .database import engine
-from .routers import project, user, authentication, files, auth, jwtauth, userproject
+from .routers import project, user, authentication, files, auth, jwtauth, userproject, angelica
 from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi_utils.tasks import repeat_every
@@ -53,6 +53,7 @@ app.include_router(user.router)
 app.include_router(project.router)
 app.include_router(files.router)
 app.include_router(userproject.router)
+app.include_router(angelica.router)
 #commented to not interfere with current auth implementation
 #app.include_router(auth.router)
 #app.include_router(jwtauth.router)
