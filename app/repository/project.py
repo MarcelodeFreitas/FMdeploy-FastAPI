@@ -149,7 +149,7 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
         if not ((user.is_admin_bool(user_email, db)) or (userproject.is_owner_bool(user_email, project_id, db)) or (userproject.check_access(user_id, project_id, db))):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
             detail=f"User with email: {user_email} does not have permissions to see Project id: {project_id}!") 
-    print("input type:", project.input_type, "output type", project.output_type)
+    print("input type:", project.input_type, "output type:", project.output_type)
     #check if input file exists
     input_file = files.check_input_file(input_file_id, db)
     input_file_name_no_extension = input_file.name.split(".")[0]
@@ -164,10 +164,11 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
         model_files = files.check_model_files(project_id, db)
         try:
             # run the project
-            output_file_path = run_script(project_id, python_file, model_files, input_file)
+            output_file_path = run_script(project_id, python_file, model_files, input_file, project.output_type)
             #check if result file exists
             print("OUTPUT FILE PATH:" + output_file_path + project.output_type)
             if not os.path.isfile(output_file_path + project.output_type):
+                print("ERROR3")
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                 detail="There is no output file!")
             if (project.output_type == ".nii.gz"):
@@ -181,6 +182,7 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
         except:
             log_path = "./outputfiles/" + input_file.input_file_id + "/" + python_file.python_script_name[0:-3] + ".log"
             if not os.path.isfile(log_path):
+                print("ERROR5")
                 raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
                 detail="There is no error log file!")
             return FileResponse(log_path, media_type="text/plain", filename=python_file.python_script_name[0:-3] + ".log")
@@ -188,10 +190,11 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
     else:
         try:
             # run the project
-            output_file_path = run_simple_script(project_id, python_file, input_file)
+            output_file_path = run_simple_script(project_id, python_file, input_file, project.output_type)
             #check if result file exists
             print("output file path hereeee:" + output_file_path + project.output_type)
             if not os.path.isfile(output_file_path + project.output_type):
+                print("ERROR1")
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="There is no output file!")
             if (project.output_type == ".nii.gz"):
@@ -205,6 +208,7 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
         except:
             log_path = "./outputfiles/" + input_file.input_file_id + "/" + python_file.python_script_name[0:-3] + ".log"
             if not os.path.isfile(log_path):
+                print("ERROR2")
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="There is no error log file!")
             return FileResponse(log_path, media_type="text/plain", filename=python_file.python_script_name[0:-3] + ".log")
@@ -222,7 +226,7 @@ def check_python_files(project_id: str, db: Session):
     file_exists = os.path.isfile(project.python_script_path)
     return name_path
 
-def run_script( project_id: str, python_file: dict, model_files: dict, input_file: dict):
+def run_script( project_id: str, python_file: dict, model_files: dict, input_file: dict, output_type: str):
     python_script_name = python_file.python_script_name[0:-3]
     input_file_name = input_file.name
     input_file_name_no_extension = input_file_name.split(".")[0]
@@ -268,6 +272,9 @@ def run_script( project_id: str, python_file: dict, model_files: dict, input_fil
         print("RUN SCRIPT:", run_script)
         log.error(f"RUN SCRIPT: {run_script}")
         
+        if not os.path.isfile(output_directory_path + output_file_name + output_type):
+            log.error(f"Output file does not exist or output type is not {output_type}!")
+        
     except:
         error = log.exception("run_script errors:")
         print("RUN SCRIPT ERROR:", error)
@@ -278,7 +285,7 @@ def run_script( project_id: str, python_file: dict, model_files: dict, input_fil
 
     return output_directory_path + output_file_name
 
-def run_simple_script( project_id: str, python_file: dict, input_file: dict):
+def run_simple_script( project_id: str, python_file: dict, input_file: dict, output_type: str):
     python_script_name = python_file.python_script_name[0:-3]
     input_file_name = input_file.name
     input_file_name_no_extension = input_file_name.split(".")[0]
@@ -318,6 +325,9 @@ def run_simple_script( project_id: str, python_file: dict, input_file: dict):
         run_script = script.run(input_file_path, output_file_name, output_directory_path)
         print("RUN SCRIPT:", run_script)
         log.error(f"RUN SCRIPT: {run_script}")
+        
+        if not os.path.isfile(output_directory_path + output_file_name + output_type):
+            log.error(f"Output file does not exist or output type is not {output_type}!")
         
     except:
         error = logging.exception("run_simple_script errors:")
