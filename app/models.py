@@ -14,11 +14,14 @@ class User(Base):
     password = Column(String(length=255), nullable=False)
     is_admin = Column(Boolean, default=False, nullable=True)
     userproject = relationship("UserProject", backref="User", passive_deletes=True)
-    occurrence = relationship("Occurrence", backref="User", passive_deletes=True)
+    #event = relationship("Action", backref="User", passive_deletes=True)
     
-# add one admin the database after the table User is created
+# add one admin the MySQL database after the table User is created
+""" event.listen(User.__table__, 'after_create',
+            DDL(" INSERT INTO user (name, email, password, is_admin) VALUES ('admin', 'fmdeploy@gmail.com', '$2b$12$cm7LbkGUMSzbWe9fAdCXJO/lzivm49UHi4aEGR21bpbQ5aX6a4hdS', TRUE) ")) """
+# add one admin the PostgreSQL database after the table User is created 
 event.listen(User.__table__, 'after_create',
-            DDL(" INSERT INTO user (name, email, password, is_admin) VALUES ('admin', 'fmdeploy@gmail.com', '$2b$12$cm7LbkGUMSzbWe9fAdCXJO/lzivm49UHi4aEGR21bpbQ5aX6a4hdS', TRUE) "))
+            DDL(" INSERT INTO \"user\" (name, email, password, is_admin) VALUES ('admin', 'fmdeploy@gmail.com', '$2b$12$cm7LbkGUMSzbWe9fAdCXJO/lzivm49UHi4aEGR21bpbQ5aX6a4hdS', TRUE) "))          
     
 class UserProject(Base):
     __tablename__ = 'userproject'
@@ -40,7 +43,7 @@ class Project(Base):
     created_in = Column(DateTime, nullable=False)
     last_updated = Column(DateTime, nullable=True)
     modelfile = relationship("ModelFile", backref="Project", passive_deletes=True)
-    occurrence = relationship("Occurrence", backref="Project", passive_deletes=True)
+    #action = relationship("Action", backref="Project", passive_deletes=True)
     
 class ModelFile(Base):
     __tablename__ = 'modelfile'
@@ -54,22 +57,22 @@ class InputFile(Base):
     input_file_id = Column(String(length=255), primary_key=True, index=True)
     name = Column(String(length=255), nullable=False)
     path = Column(String(length=255), nullable=False)
-    occurrence = relationship("Occurrence", backref="InputFile", passive_deletes=True)
+    #action = relationship("Action", backref="InputFile", passive_deletes=True)
     
 class OutputFile(Base):
     __tablename__ = 'outputfile'
     output_file_id = Column(String(length=255), primary_key=True, index=True)
     name = Column(String(length=255), nullable=False)
     path = Column(String(length=255), nullable=False)
-    occurrence = relationship("Occurrence", backref="OutputFile", passive_deletes=True)
+    #action = relationship("Action", backref="OutputFile", passive_deletes=True)
         
-class Occurrence(Base):
-    __tablename__ = 'occurrence'
-    ocurrence_id = Column(String(length=255), primary_key=True, index=True)
-    flagged = Column(Boolean, default=False, nullable=True)
-    flag_description = Column(String(length=255), nullable=True)
+""" class Action(Base):
+    __tablename__ = 'action'
+    action_id = Column(String(length=255), primary_key=True, index=True)
     fk_user_id = Column(Integer, ForeignKey('user.user_id', ondelete='CASCADE'), nullable=False)
     fk_project_id = Column(String(length=255), ForeignKey('project.project_id', ondelete='CASCADE'), nullable=False)
     fk_input_file_id = Column(String(length=255), ForeignKey('inputfile.input_file_id', ondelete='CASCADE'), nullable=False)
     fk_output_file_id = Column(String(length=255), ForeignKey('outputfile.output_file_id', ondelete='CASCADE'), nullable=False)
-    timestamp = Column(DateTime, nullable=False)
+    flagged = Column(Boolean, default=False, nullable=True)
+    flag_description = Column(String(length=255), nullable=True)
+    timestamp = Column(DateTime, nullable=False) """
