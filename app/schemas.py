@@ -157,3 +157,24 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+    
+class ShowRunHistory(BaseModel):
+    run_history_id: int
+    fk_user_id: int
+    fk_project_id: str
+    fk_input_file_id: str
+    fk_output_file_id: Optional[str] = None
+    flagged: bool
+    flag_description: Optional[str] = None
+    timestamp: datetime
+
+class CreateRunHistory(BaseModel):
+    run_history_id: int
+    fk_user_id: int
+    fk_project_id: str
+    fk_input_file_id: str
+    fk_output_file_id: Optional[str] = None
+    flagged: bool
+    flag_description: Optional[str] = None
+    class Config():
+        orm_mode = True

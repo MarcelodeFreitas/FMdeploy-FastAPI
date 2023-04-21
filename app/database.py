@@ -21,9 +21,9 @@ engine = create_engine(
 ) """
 
 #MYSQL
-""" SQLALCHAMY_DATABASE_URL = 'mysql+mysqlconnector://root:1875mdfm@localhost:3306/fmdeploy_db' """
+SQLALCHAMY_DATABASE_URL = 'mysql+mysqlconnector://root:1875mdfm@localhost:3306/fmdeploy_db'
 #POSTGRESQL
-SQLALCHAMY_DATABASE_URL = 'postgresql://postgres:2f2kir2y49xy6g@localhost/fmdeploy_db'
+""" SQLALCHAMY_DATABASE_URL = 'postgresql://postgres:2f2kir2y49xy6g@localhost/fmdeploy_db' """
 
 engine = create_engine(SQLALCHAMY_DATABASE_URL) #, echo=true
 
