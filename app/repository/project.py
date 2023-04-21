@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from .. import schemas, models
-from . import user, files, userproject
+from . import user, files, userproject, runhistory
 import uuid
 from typing import List
 import importlib
@@ -162,6 +162,9 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
         #check if the table modelfile has files associated with this project
         #check if those files exist in the file system
         model_files = files.check_model_files(project_id, db)
+        #register in the run history table
+        print("project/runhistory testing:", user_id, project_id, input_file_id, None, False, None)
+        runhistory.create_entry(db, user_id, project_id, input_file_id, None, False, None)
         try:
             # run the project
             output_file_path = run_script(project_id, python_file, model_files, input_file, project.output_type)

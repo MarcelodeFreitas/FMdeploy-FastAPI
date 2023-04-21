@@ -68,11 +68,11 @@ class OutputFile(Base):
         
 class RunHistory(Base):
     __tablename__ = 'runhistory'
-    run_history_id = Column(String(length=255), primary_key=True, index=True)
+    run_history_id = Column(Integer, primary_key=True, index=True)
     fk_user_id = Column(Integer, ForeignKey('user.user_id', ondelete='CASCADE'), nullable=False)
     fk_project_id = Column(String(length=255), ForeignKey('project.project_id', ondelete='CASCADE'), nullable=False)
     fk_input_file_id = Column(String(length=255), ForeignKey('inputfile.input_file_id', ondelete='CASCADE'), nullable=False)
-    fk_output_file_id = Column(String(length=255), ForeignKey('outputfile.output_file_id', ondelete='CASCADE'), nullable=False)
+    fk_output_file_id = Column(String(length=255), ForeignKey('outputfile.output_file_id', ondelete='CASCADE'), nullable=True)
     flagged = Column(Boolean, default=False, nullable=True)
     flag_description = Column(String(length=255), nullable=True)
     timestamp = Column(DateTime, nullable=False)
