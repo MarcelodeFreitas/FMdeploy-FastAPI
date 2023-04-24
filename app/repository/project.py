@@ -26,7 +26,7 @@ def get_all_exposed(user_email: str, db: Session):
     user.is_admin(user_email, db)
     #list all projects
     """ project_list = db.query(models.Project).all() """
-    user_id = user.get_by_email(user_email, db).user_id
+    """ user_id = user.get_by_email(user_email, db).user_id """
     project_list = db.query(models.UserProject, models.Project, models.User).where(models.UserProject.owner == True).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.project_id, models.User.name, models.Project.title, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private, models.Project.created_in, models.Project.last_updated).all()
     if not project_list:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,

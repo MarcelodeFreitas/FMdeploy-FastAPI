@@ -158,7 +158,7 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
     
-class ShowRunHistory(BaseModel):
+""" class ShowRunHistory(BaseModel):
     run_history_id: int
     fk_user_id: int
     fk_project_id: str
@@ -166,7 +166,23 @@ class ShowRunHistory(BaseModel):
     fk_output_file_id: Optional[str] = None
     flagged: bool
     flag_description: Optional[str] = None
+    timestamp: datetime """
+    
+class ShowRunHistory(BaseModel):
+    project_id: str
+    title: str
+    description: Optional[str] = None
+    email: str
+    name: str
+    flagged: bool
+    flag_description: Optional[str] = None
     timestamp: datetime
+    fk_input_file_id: str
+    input_file_name: str
+    input_file_path: str
+    fk_output_file_id: Optional[str] = None
+    output_file_name: Optional[str] = None
+    output_file_path: Optional[str] = None
 
 class CreateRunHistory(BaseModel):
     run_history_id: int

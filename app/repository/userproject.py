@@ -65,7 +65,7 @@ def delete(user_id: int, project_id: str, db: Session):
     return True
 
 def owned(current_user_email: str, db: Session):
-    #check the user exists
+    #get the user_id from user_email
     user_id = user.get_by_email(current_user_email, db).user_id
     #get entries where user is the owner from UserProject
     userproject = db.query(models.UserProject, models.Project, models.User).where(models.UserProject.fk_user_id == user_id).where(models.UserProject.owner == True).outerjoin(models.Project).outerjoin(models.User).with_entities(models.Project.created_in, models.Project.title, models.Project.project_id, models.Project.description, models.Project.input_type, models.Project.output_type, models.Project.is_private, models.User.name).all()

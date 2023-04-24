@@ -3,7 +3,7 @@ from .. import schemas, oauth2
 from ..database import get_db
 from typing import List
 from sqlalchemy.orm import Session
-from ..repository import project
+from ..repository import project, runhistory
 
 router = APIRouter(
     prefix="/project",
