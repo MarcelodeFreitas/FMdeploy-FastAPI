@@ -169,6 +169,7 @@ class TokenData(BaseModel):
     timestamp: datetime """
     
 class ShowRunHistory(BaseModel):
+    run_history_id: int
     project_id: str
     title: str
     description: Optional[str] = None
@@ -185,7 +186,6 @@ class ShowRunHistory(BaseModel):
     output_file_path: Optional[str] = None
 
 class CreateRunHistory(BaseModel):
-    run_history_id: int
     fk_user_id: int
     fk_project_id: str
     fk_input_file_id: str

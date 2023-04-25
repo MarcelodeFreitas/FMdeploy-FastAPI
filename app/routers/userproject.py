@@ -10,11 +10,6 @@ router = APIRouter(
     tags=['User Project']
 )
 
-#get run history
-@router.get('/runhistory', status_code = status.HTTP_200_OK, response_model=List[schemas.ShowRunHistory])
-def get_run_history(db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
-    return runhistory.get_current(get_current_user, db)
-
 @router.post("/owner/{project_id}", status_code = status.HTTP_200_OK, response_model=schemas.Owner)
 def check_if_owner(project_id: str, db: Session = Depends(get_db), get_current_user: schemas.User = Depends(oauth2.get_current_user)):
     return userproject.check_owner_exposed(get_current_user, project_id, db)
