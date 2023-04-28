@@ -99,10 +99,26 @@ def get_by_id(db: Session, run_history_id: int):
     return run_history
 
 
+# get run history entry by output file id
+def get_by_output_file_id(db: Session, output_file_id: str):
+    # get the run history entry by id
+    run_history = (
+        db.query(models.RunHistory)
+        .where(models.RunHistory.fk_output_file_id == output_file_id)
+        .first()
+    )
+    if not run_history:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Run History entry with output_file_id: {output_file_id} not found!",
+        )
+    return run_history
+
+
 # update fk_output_file_id to run history entry by id
 def update_output(db: Session, run_history_id: int, output_file_id: str):
     print("update_output: ", run_history_id, output_file_id)
-    # check permissions by matching the user_id with the fk_user_id in the run history table
+    # get the run history entry by id
     run_history_entry = get_by_id(db, run_history_id)
     print("run_history_entry: ", run_history_entry)
     # if a request field is empty or null keep the previous value
@@ -129,4 +145,45 @@ def update_output(db: Session, run_history_id: int, output_file_id: str):
     ) """
 
 
-# delete an entry in the run history table
+# update flag and flag description to run history entry by id
+def flag_by_run_history_id(
+    user_email: str, db: Session, request: schemas.RunHistoryFlag
+):
+    # get the run history entry by id
+    run_history_entry = get_by_id(db, request.run_history_id)
+    # update run history entry in the database
+    try:
+        # .update() method is not avaiilable for individual model objects
+        run_history_entry.flagged = request.flagged
+        run_history_entry.flag_description = request.flag_description
+        db.commit()
+    except Exception as e:
+        raise Exception(
+            f"Run History with id: {request.run_history_id} error updating database ! Error message: {str(e)}"
+        )
+    return HTTPException(
+        status_code=status.HTTP_200_OK,
+        detail=f"Run History with id: {request.run_history_id} was successfully updated by User with email: {user_email}.",
+    )
+
+
+# update flag and flag description to run history entry by id
+def flag_by_output_file_id(
+    user_email: str, db: Session, request: schemas.RunHistoryFlag
+):
+    # get the run history entry by id
+    run_history_entry = get_by_output_file_id(db, request.output_file_id)
+    # update run history entry in the database
+    try:
+        # .update() method is not avaiilable for individual model objects
+        run_history_entry.flagged = request.flagged
+        run_history_entry.flag_description = request.flag_description
+        db.commit()
+    except Exception as e:
+        raise Exception(
+            f"Run History with output_file_id: {request.output_file_id} error updating database ! Error message: {str(e)}"
+        )
+    return HTTPException(
+        status_code=status.HTTP_200_OK,
+        detail=f"Run History with output_file_id: {request.output_file_id} was successfully updated by User with email: {user_email}.",
+    )

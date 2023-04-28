@@ -249,9 +249,19 @@ class UpdateRunHistory(BaseModel):
         orm_mode = True
 
 
-class UpdateOutputRunHistory(BaseModel):
+class RunHistoryFlag(BaseModel):
     run_history_id: int
-    fk_output_file_id: str
+    flagged: bool
+    flag_description: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+
+class RunHistoryFlag2(BaseModel):
+    output_file_id: str
+    flagged: bool
+    flag_description: Optional[str] = None
 
     class Config:
         orm_mode = True

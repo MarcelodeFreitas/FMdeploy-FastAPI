@@ -19,13 +19,11 @@ def get_run_history(
     return runhistory.get_current(get_current_user, db)
 
 
-""" # update run history entry
-@router.put(
-    "", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.ShowRunHistory
-)
-def update_run_history_entry(
-    request: schemas.UpdateProject,
+# update flag and flag description in run history table entry
+@router.put("/flag", status_code=status.HTTP_202_ACCEPTED)
+def flag_run_history_entry(
+    request: schemas.RunHistoryFlag2,
     db: Session = Depends(get_db),
     get_current_user: schemas.User = Depends(oauth2.get_current_user),
 ):
-    return runhistory.update_by_id(get_current_user, db, request) """
+    return runhistory.flag_by_output_file_id(get_current_user, db, request)
