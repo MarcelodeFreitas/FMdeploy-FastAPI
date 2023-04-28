@@ -361,7 +361,7 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
             False,
             None,
         )
-        runhistory.create_entry(
+        run_history_id = runhistory.create_entry(
             db, user_id, project_id, input_file_id, None, False, None
         )
         try:
@@ -373,6 +373,7 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
                 model_files,
                 input_file,
                 project.output_type,
+                run_history_id,
             )
             # check if result file exists
             print("OUTPUT FILE PATH:" + output_file_path + project.output_type)
@@ -414,7 +415,8 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
                     + input_file_name_no_extension
                     + project.output_type,
                 )
-        except:
+        except Exception as e:
+            raise Exception(f"Error running porject: Error message: {str(e)}")
             log_path = (
                 "./outputfiles/"
                 + input_file.input_file_id
@@ -438,7 +440,12 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
         try:
             # run the project
             output_file_path = run_simple_script(
-                db, project_id, python_file, input_file, project.output_type
+                db,
+                project_id,
+                python_file,
+                input_file,
+                project.output_type,
+                run_history_id,
             )
             # check if result file exists
             print("output file path hereeee:" + output_file_path + project.output_type)
@@ -534,6 +541,7 @@ def run_script(
     model_files: dict,
     input_file: dict,
     output_type: str,
+    run_history_id: int,
 ):
     python_script_name = python_file.python_script_name[0:-3]
     input_file_name = input_file.name
@@ -606,11 +614,19 @@ def run_script(
         output_directory_path + output_file_name + output_type,
     )
 
+    # add the output file information to the run history table
+    runhistory.update_output(db, run_history_id, output_file_id)
+
     return output_directory_path + output_file_name
 
 
 def run_simple_script(
-    db: Session, project_id: str, python_file: dict, input_file: dict, output_type: str
+    db: Session,
+    project_id: str,
+    python_file: dict,
+    input_file: dict,
+    output_type: str,
+    run_history_id: int,
 ):
     python_script_name = python_file.python_script_name[0:-3]
     input_file_name = input_file.name
@@ -677,6 +693,9 @@ def run_simple_script(
         output_file_name + output_type,
         output_directory_path + output_file_name + output_type,
     )
+
+    # add the output file information to the run history table
+    runhistory.update_output(db, run_history_id, output_file_id)
 
     return output_directory_path + output_file_name
 
