@@ -22,8 +22,8 @@ def get_run_history(
 # update flag and flag description in run history table entry
 @router.put("/flag", status_code=status.HTTP_202_ACCEPTED)
 def flag_run_history_entry(
-    request: schemas.RunHistoryFlag2,
+    request: schemas.RunHistoryFlagInput,
     db: Session = Depends(get_db),
     get_current_user: schemas.User = Depends(oauth2.get_current_user),
 ):
-    return runhistory.flag_by_output_file_id(get_current_user, db, request)
+    return runhistory.flag_by_input_file_id(get_current_user, db, request)

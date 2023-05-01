@@ -258,8 +258,17 @@ class RunHistoryFlag(BaseModel):
         orm_mode = True
 
 
-class RunHistoryFlag2(BaseModel):
+class RunHistoryFlagOutput(BaseModel):
     output_file_id: str
+    flagged: bool
+    flag_description: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+
+class RunHistoryFlagInput(BaseModel):
+    input_file_id: str
     flagged: bool
     flag_description: Optional[str] = None
 

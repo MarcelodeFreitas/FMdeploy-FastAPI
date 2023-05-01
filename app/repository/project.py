@@ -352,15 +352,6 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
         # check if those files exist in the file system
         model_files = files.check_model_files(project_id, db)
         # register in the run history table
-        print(
-            "project/runhistory testing:",
-            user_id,
-            project_id,
-            input_file_id,
-            None,
-            False,
-            None,
-        )
         run_history_id = runhistory.create_entry(
             db, user_id, project_id, input_file_id, None, False, None
         )
@@ -416,7 +407,7 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
                     + project.output_type,
                 )
         except Exception as e:
-            raise Exception(f"Error running porject: Error message: {str(e)}")
+            """raise Exception(f"Error running porject: Error message: {str(e)}")"""
             log_path = (
                 "./outputfiles/"
                 + input_file.input_file_id
