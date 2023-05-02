@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from .. import models
 from typing import List
@@ -294,4 +295,96 @@ def create_output_file_entry(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Output File with id number {output_file_id} error creating OutputFile table entry!",
+        )
+
+
+# get input file by id
+def get_input_file_by_id(db: Session, input_file_id: str):
+    input_file = (
+        db.query(models.InputFile, models.RunHistory, models.Project)
+        .select_from(models.InputFile)  # Specify the table to join from
+        .where(models.InputFile.input_file_id == input_file_id)
+        .outerjoin(models.RunHistory)
+        .outerjoin(models.Project)
+        .with_entities(
+            models.InputFile.input_file_id.label("id"),
+            models.InputFile.name,
+            models.InputFile.path,
+            models.Project.input_type.label("type"),
+        )
+        .first()
+    )
+    print("input_file: ", input_file)
+
+    if not input_file:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Input File with id number {input_file_id} not found!",
+        )
+
+    if not os.path.isfile(input_file.path):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Input File with id {input_file_id} not found!",
+        )
+
+    media_type_dict = {
+        ".nii.gz": ("application/gzip", ".nii.gz"),
+        ".csv": ("text/csv", ".csv"),
+        ".png": ("image/png", ".png"),
+        ".wav": ("audio/wav", ".wav"),
+    }
+
+    if input_file.type in media_type_dict:
+        media_type, file_ext = media_type_dict[input_file.type]
+        return FileResponse(
+            input_file.path,
+            media_type=media_type,
+            filename=input_file.name,
+        )
+
+
+# get outputfile by id
+def get_output_file_by_id(db: Session, output_file_id: str):
+    output_file = (
+        db.query(models.OutputFile, models.RunHistory, models.Project)
+        .select_from(models.OutputFile)  # Specify the table to join from
+        .where(models.OutputFile.output_file_id == output_file_id)
+        .outerjoin(models.RunHistory)
+        .outerjoin(models.Project)
+        .with_entities(
+            models.OutputFile.output_file_id.label("id"),
+            models.OutputFile.name,
+            models.OutputFile.path,
+            models.Project.output_type.label("type"),
+        )
+        .first()
+    )
+    print("output_file: ", output_file)
+
+    if not output_file:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Output File with id number {output_file_id} not found!",
+        )
+
+    if not os.path.isfile(output_file.path):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Output File with id {output_file_id} not found!",
+        )
+
+    media_type_dict = {
+        ".nii.gz": ("application/gzip", ".nii.gz"),
+        ".csv": ("text/csv", ".csv"),
+        ".png": ("image/png", ".png"),
+        ".wav": ("audio/wav", ".wav"),
+    }
+
+    if output_file.type in media_type_dict:
+        media_type, file_ext = media_type_dict[output_file.type]
+        return FileResponse(
+            output_file.path,
+            media_type=media_type,
+            filename=output_file.name,
         )

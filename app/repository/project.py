@@ -374,7 +374,7 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="There is no output file!",
                 )
-            if project.output_type == ".nii.gz":
+            """ if project.output_type == ".nii.gz":
                 return FileResponse(
                     output_file_path + project.output_type,
                     media_type="application/gzip",
@@ -405,6 +405,20 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
                     filename="result_"
                     + input_file_name_no_extension
                     + project.output_type,
+                ) """
+            media_type_dict = {
+                ".nii.gz": ("application/gzip", ".nii.gz"),
+                ".csv": ("text/csv", ".csv"),
+                ".png": ("image/png", ".png"),
+                ".wav": ("audio/wav", ".wav"),
+            }
+
+            if project.output_type in media_type_dict:
+                media_type, file_ext = media_type_dict[project.output_type]
+                return FileResponse(
+                    output_file_path + project.output_type,
+                    media_type=media_type,
+                    filename="result_" + input_file_name_no_extension + file_ext,
                 )
         except Exception as e:
             """raise Exception(f"Error running porject: Error message: {str(e)}")"""
@@ -446,7 +460,7 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="There is no output file!",
                 )
-            if project.output_type == ".nii.gz":
+            """ if project.output_type == ".nii.gz":
                 return FileResponse(
                     output_file_path + project.output_type,
                     media_type="application/gzip",
@@ -477,6 +491,20 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
                     filename="result_"
                     + input_file_name_no_extension
                     + project.output_type,
+                ) """
+            media_type_dict = {
+                ".nii.gz": ("application/gzip", ".nii.gz"),
+                ".csv": ("text/csv", ".csv"),
+                ".png": ("image/png", ".png"),
+                ".wav": ("audio/wav", ".wav"),
+            }
+
+            if project.output_type in media_type_dict:
+                media_type, file_ext = media_type_dict[project.output_type]
+                return FileResponse(
+                    output_file_path + project.output_type,
+                    media_type=media_type,
+                    filename="result_" + input_file_name_no_extension + file_ext,
                 )
         except:
             log_path = (

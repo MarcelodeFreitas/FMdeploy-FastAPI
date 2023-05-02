@@ -72,3 +72,23 @@ def check_python_file_by_id(
     get_current_user: schemas.User = Depends(oauth2.get_current_user),
 ):
     return project.check_python_files(project_id, db)
+
+
+# get input file by path
+@router.get("/inputfile/{input_file_id})", status_code=status.HTTP_200_OK)
+def get_input_file(
+    input_file_id,
+    db: Session = Depends(get_db),
+    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+):
+    return files.get_input_file_by_id(db, input_file_id)
+
+
+# get output file by path
+@router.get("/outputfile/{output_file_id})", status_code=status.HTTP_200_OK)
+def get_output_file(
+    output_file_id,
+    db: Session = Depends(get_db),
+    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+):
+    return files.get_output_file_by_id(db, output_file_id)
