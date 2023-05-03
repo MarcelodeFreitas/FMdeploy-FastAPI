@@ -300,6 +300,7 @@ def create_output_file_entry(
 
 # get input file by id
 def get_input_file_by_id(db: Session, input_file_id: str):
+    print("input_file_id: ", input_file_id)
     input_file = (
         db.query(models.InputFile, models.RunHistory, models.Project)
         .select_from(models.InputFile)  # Specify the table to join from

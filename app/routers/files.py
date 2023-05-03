@@ -75,7 +75,7 @@ def check_python_file_by_id(
 
 
 # get input file by path
-@router.get("/inputfile/{input_file_id})", status_code=status.HTTP_200_OK)
+@router.get("/inputfile/{input_file_id}", status_code=status.HTTP_200_OK)
 def get_input_file(
     input_file_id,
     db: Session = Depends(get_db),
@@ -85,7 +85,7 @@ def get_input_file(
 
 
 # get output file by path
-@router.get("/outputfile/{output_file_id})", status_code=status.HTTP_200_OK)
+@router.get("/outputfile/{output_file_id}", status_code=status.HTTP_200_OK)
 def get_output_file(
     output_file_id,
     db: Session = Depends(get_db),
