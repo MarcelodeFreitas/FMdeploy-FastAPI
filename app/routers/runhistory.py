@@ -19,6 +19,20 @@ def get_run_history(
     return runhistory.get_current(get_current_user, db)
 
 
+# get flagged outputs for project
+@router.get(
+    "/flagged/{project_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=List[schemas.ShowRunHistory],
+)
+def get_flagged_outputs(
+    project_id,
+    db: Session = Depends(get_db),
+    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+):
+    return runhistory.get_project_flagged_outputs(db, get_current_user, project_id)
+
+
 # update flag and flag description in run history table entry
 @router.put("/flag", status_code=status.HTTP_202_ACCEPTED)
 def flag_run_history_entry(

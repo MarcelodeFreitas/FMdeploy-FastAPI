@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from .. import schemas, models
-from . import user
+from . import user, userproject
 from datetime import datetime
 from typing import Optional
 import logging
@@ -50,6 +50,67 @@ def get_current(user_email: str, db: Session):
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Run History table is empty!"
         )
     return run_history
+
+
+# get run history of flagged outputs for a specific project and check if owner
+def get_project_flagged_outputs(db: Session, user_email: str, project_id: str):
+    """# get user id from user email
+    user_id = user.get_by_email(user_email, db).user_id"""
+    # check permissions
+    # check if owner or admin
+    if not (
+        (user.is_admin_bool(user_email, db))
+        or (userproject.is_owner_bool(user_email, project_id, db))
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"User with email: {user_email} does not have permissions to view flagged outputs of Project id: {project_id}!",
+        )
+    # list entries where the
+    # project_id is a fk_project_id in the run history table
+    # and flagged is True
+    # and owner is True
+    flagged = (
+        db.query(
+            models.RunHistory,
+            models.User,
+            models.Project,
+            models.InputFile,
+            models.OutputFile,
+            models.UserProject,
+        )
+        .select_from(models.RunHistory)  # Specify the table to join from
+        .where(models.RunHistory.fk_project_id == project_id)
+        .where(models.RunHistory.flagged == True)
+        .outerjoin(models.User)
+        .outerjoin(models.Project)
+        .outerjoin(models.InputFile)
+        .outerjoin(models.OutputFile)
+        .with_entities(
+            models.RunHistory.run_history_id,
+            models.RunHistory.flagged,
+            models.RunHistory.flag_description,
+            models.RunHistory.timestamp,
+            models.RunHistory.fk_input_file_id,
+            models.RunHistory.fk_output_file_id,
+            models.User.email,
+            models.User.name,
+            models.Project.project_id,
+            models.Project.title,
+            models.Project.description,
+            models.InputFile.name.label("input_file_name"),
+            models.InputFile.path.label("input_file_path"),
+            models.OutputFile.name.label("output_file_name"),
+            models.OutputFile.path.label("output_file_path"),
+        )
+        .all()
+    )
+    if not flagged:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Flagged Output table is empty!",
+        )
+    return flagged
 
 
 # create an entry in the run history table
