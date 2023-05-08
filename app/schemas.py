@@ -117,7 +117,7 @@ class ShowUserAdmin(BaseModel):
     user_id: str
     name: str
     email: str
-    is_admin: bool
+    role: str
 
     class Config:
         orm_mode = True
@@ -193,7 +193,8 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    email: Optional[str] = None
+    email: str
+    role: str
 
 
 """ class ShowRunHistory(BaseModel):
