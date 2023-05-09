@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from .. import models, hashing
 from . import project
+from enum import Enum
 
 
 # get user role
@@ -31,22 +32,8 @@ def is_admin_bool(email: str, db: Session):
     return user.is_admin """
 
 
-# get user by id for internal use
+# get user by id
 def get_by_id(user_id: int, db: Session):
-    # get user by id
-    user = db.query(models.User).filter(models.User.user_id == user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with id number: {user_id} was not found!",
-        )
-    return user
-
-
-# get user by id for external use by admin
-def get_by_id_exposed(user_email: str, user_id: int, db: Session):
-    # check if admin
-    is_admin(user_email, db)
     # get user by id
     user = db.query(models.User).filter(models.User.user_id == user_id).first()
     if not user:
@@ -68,7 +55,7 @@ def get_user_query_by_id(user_id: int, db: Session):
     return user
 
 
-# create a user in the database
+# create a user in the database with default role "guest"
 def create(name: str, email: str, password: str, db: Session):
     new_user = models.User(
         name=name, email=email, password=hashing.Hash.bcrypt(password)
@@ -85,13 +72,10 @@ def create(name: str, email: str, password: str, db: Session):
     return new_user
 
 
-# create admin for use by admins only
-def create_admin(user_email: str, name: str, email: str, password: str, db: Session):
-    # check if admin
-    is_admin(user_email, db)
-    # create new admin
+# create a user with any role
+def create_with_role(db: Session, name: str, email: str, password: str, role: str):
     new_user = models.User(
-        name=name, email=email, password=hashing.Hash.bcrypt(password), is_admin=True
+        name=name, email=email, password=hashing.Hash.bcrypt(password), role=role
     )
     try:
         db.add(new_user)
@@ -105,7 +89,7 @@ def create_admin(user_email: str, name: str, email: str, password: str, db: Sess
     return new_user
 
 
-# get all the user in the database for admins
+# get all the user in the database
 def get_all(db: Session):
     # get all users
     user_list = db.query(models.User).all()
@@ -116,22 +100,22 @@ def get_all(db: Session):
     return user_list
 
 
-# get user by email for external use by admin
-def get_by_email_exposed(user_email: str, email: str, db: Session):
-    """# check if admin
-    is_admin(user_email, db)"""
+# get current user by email
+def get_by_email(email: str, db: Session):
     # get user by email
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with email: {email} was not found!",
+            detail=f"User with email: {email} not found!",
         )
     return user
 
 
-# get user by email for internal use
-def get_by_email(email: str, db: Session):
+# get user by email for external use by admin
+def get_by_email_exposed(user_email: str, email: str, db: Session):
+    """# check if admin
+    is_admin(user_email, db)"""
     # get user by email
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
@@ -172,11 +156,9 @@ def delete_user_by_id(user_id: int, db: Session):
     )
 
 
-# delete user in user table and in userailist table by id for external use by admin
-def delete_by_id_exposed(user_email: str, user_id: int, db: Session):
-    # check if admin
-    is_admin(user_email, db)
-    # check if user exists
+# delete user in user table and in userailist table by id
+def delete_by_id(user_id: int, db: Session):
+    # get the user object by id
     user = get_user_query_by_id(user_id, db)
     # delete user
     try:
@@ -195,28 +177,7 @@ def delete_by_id_exposed(user_email: str, user_id: int, db: Session):
 
 # delete user in user table and in userailist table by email
 def delete_by_email(user_email: str, db: Session):
-    # check if user exists
-    user = get_user_query_by_email(user_email, db)
-    # delete user
-    try:
-        user.delete(synchronize_session=False)
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Error deleting user with email: {user_email} from database!",
-        )
-    return HTTPException(
-        status_code=status.HTTP_200_OK,
-        detail=f"User with email: {user_email} was successfully deleted.",
-    )
-
-
-# delete user in user table and in userailist table by email for external use by admin
-def delete_by_email_exposed(current_user_email: str, user_email: str, db: Session):
-    # check if admin
-    is_admin(current_user_email, db)
-    # check if user exists
+    # get the user object using the email
     user = get_user_query_by_email(user_email, db)
     # delete user
     try:
@@ -295,12 +256,12 @@ def update_by_id(user_id: int, user_email: str, user_name: str, db: Session):
     )
 
 
-# update user email or user name by email
+# update current user information (name, email, password) by email
 def update_by_email(
     user_email: str, new_name: str, new_email: str, new_password: str, db: Session
 ):
     print("NAME: ", new_name, "EMAIL: ", new_email, "PASSWORD: ", new_password)
-    # check if user exists
+    # get user by email
     user = get_user_query_by_email(user_email, db)
     # check what data has been provided in the request
     if (
@@ -311,18 +272,78 @@ def update_by_email(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Update fields are empty!"
         )
-    # if empty keep previous data
-
-    if new_email != "" and new_email != None:
-        user.update({"email": new_email})
-    if new_name != "" and new_name != None:
-        user.update({"name": new_name})
-    if new_password != "" and new_password != None:
-        user.update({"password": hashing.Hash.bcrypt(new_password)})
-    db.commit()
-    """ except:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, 
-        detail=f"Email: {user_email}, is already registered!") """
+    try:
+        # if empty keep previous data
+        if new_email != "" and new_email != None:
+            user.update({"email": new_email})
+        if new_name != "" and new_name != None:
+            user.update({"name": new_name})
+        if new_password != "" and new_password != None:
+            user.update({"password": hashing.Hash.bcrypt(new_password)})
+        db.commit()
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating user information!",
+        )
     return HTTPException(
         status_code=status.HTTP_200_OK, detail=f"User data was successfully updated!"
     )
+
+
+class UserRole(str, Enum):
+    admin = "admin"
+    user = "user"
+    guest = "guest"
+
+
+# update current user information with role (name, email, password, and role) by email
+def update_by_email_with_role(
+    current_email: str,
+    new_name: str,
+    new_email: str,
+    new_password: str,
+    new_role: UserRole,
+    db: Session,
+):
+    print(
+        "NAME: ",
+        new_name,
+        "EMAIL: ",
+        new_email,
+        "PASSWORD: ",
+        new_password,
+        "ROLE: ",
+        new_role,
+    )
+    # get user by email
+    user = get_user_query_by_email(current_email, db)
+    # check what data has been provided in the request
+    if (
+        (new_email == "" or new_email == None)
+        and (new_name == "" or new_name == None)
+        and (new_password == "" or new_password == None)
+        and (new_role == "" or new_role == None)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Update fields are empty!"
+        )
+    try:
+        # if empty keep previous data
+        if new_email != "" and new_email != None:
+            user.update({"email": new_email})
+        if new_name != "" and new_name != None:
+            user.update({"name": new_name})
+        if new_password != "" and new_password != None:
+            user.update({"password": hashing.Hash.bcrypt(new_password)})
+        if new_role != "" and new_role != None:
+            user.update({"role": new_role})
+        db.commit()
+        db.refresh(user)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        """ raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating user information!",
+        ) """
+    return user.first()

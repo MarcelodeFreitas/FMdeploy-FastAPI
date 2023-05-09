@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, constr
 from typing import Optional
 from datetime import datetime
 
@@ -132,10 +132,31 @@ class CreateUser(BaseModel):
         orm_mode = True
 
 
+class CreateUserAdmin(BaseModel):
+    name: str
+    email: str
+    password: str
+    role: constr(regex="^(admin|guest|user)$")
+
+    class Config:
+        orm_mode = True
+
+
 class UpdateUser(BaseModel):
     new_name: Optional[str] = None
     new_email: Optional[str] = None
     new_password: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+
+class UpdateUserAdmin(BaseModel):
+    current_email: str
+    new_name: Optional[str] = None
+    new_email: Optional[str] = None
+    new_password: Optional[str] = None
+    new_role: Optional[constr(regex="^(admin|guest|user)$")] = None
 
     class Config:
         orm_mode = True
