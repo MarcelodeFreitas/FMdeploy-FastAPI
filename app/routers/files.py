@@ -11,37 +11,42 @@ router = APIRouter(prefix="/files", tags=["Files"])
 
 
 # upload input file
+# authorization: any + login required
 @router.post("/inputfile", status_code=status.HTTP_200_OK)
 async def create_input_file(
     input_file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.get_current_user),
 ):
     return await files.create_input_file(db, input_file)
 
 
 # upload python script
+# authorization: admin or user that owns the project
 @router.post("/pythonscript/{project_id}")
 async def create_script_file(
     project_id: str,
     python_file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.this_user_or_admin),
 ):
     return await files.create_python_script(
-        get_current_user, project_id, db, python_file
+        current_user.email, current_user.role, project_id, db, python_file
     )
 
 
 # upload modelfiles
+# authorization: admin or user that owns the project
 @router.post("/modelfiles/{project_id}")
 async def create_model_file(
     project_id: str,
     model_files: List[UploadFile] = File(...),
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.this_user_or_admin),
 ):
-    return await files.create_model_files(get_current_user, project_id, db, model_files)
+    return await files.create_model_files(
+        current_user.email, current_user.role, project_id, db, model_files
+    )
 
 
 # get modelfiles name and path stored for a specific project

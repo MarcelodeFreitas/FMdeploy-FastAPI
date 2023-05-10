@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status, UploadFile, File
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from .. import models
 from typing import List
 import uuid
@@ -9,6 +10,43 @@ import shutil
 from . import user, userproject
 import sys
 import importlib
+from .user import UserRole
+
+
+# handle upload for input file
+async def create_input_file(db: Session, input_file: UploadFile = File(...)):
+    # create unique id for input file
+    input_file_id = str(uuid.uuid4()).replace("-", "")
+
+    file_name = input_file.filename
+    file_path = "./inputfiles/" + input_file_id + "/" + file_name
+
+    # create directory for input file and save file in it
+    try:
+        os.makedirs("./inputfiles/" + input_file_id, exist_ok=True)
+        with open(f"{file_path}", "wb") as buffer:
+            shutil.copyfileobj(input_file.file, buffer)
+    except OSError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Input File with id number: {input_file_id} and name: {file_name} filesystem write error: {e}",
+        )
+
+    new_input_file = models.InputFile(
+        input_file_id=input_file_id, name=file_name, path=file_path
+    )
+    # add input file to database
+    try:
+        db.add(new_input_file)
+        db.commit()
+        db.refresh(new_input_file)
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Input File with id number {input_file_id} error creating InputFile table entry: {e}",
+        )
+
+    return new_input_file
 
 
 def check_model_files(project_id: str, db: Session):
@@ -77,38 +115,6 @@ def delete_model_files(project_id: str, db: Session):
     return True
 
 
-async def create_input_file(db: Session, input_file: UploadFile = File(...)):
-    input_file_id = str(uuid.uuid4()).replace("-", "")
-    file_name = input_file.filename
-    file_path = "./inputfiles/" + input_file_id + "/" + file_name
-
-    try:
-        os.makedirs("./inputfiles/" + input_file_id, exist_ok=True)
-        with open(f"{file_path}", "wb") as buffer:
-            shutil.copyfileobj(input_file.file, buffer)
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Input File with id number: {input_file_id} and name: {file_name} filesystem write error!",
-        )
-
-    new_input_file = models.InputFile(
-        input_file_id=input_file_id, name=file_name, path=file_path
-    )
-
-    try:
-        db.add(new_input_file)
-        db.commit()
-        db.refresh(new_input_file)
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Input File with id number {input_file_id} error creating InputFile table entry!",
-        )
-
-    return new_input_file
-
-
 def check_input_file(input_file_id: str, db: Session):
     input_file = (
         db.query(models.InputFile)
@@ -134,22 +140,22 @@ def check_input_file(input_file_id: str, db: Session):
     return inputfile_name_path
 
 
+# handle pythonscript upload to filesystem and database associated with a specific project
 async def create_python_script(
     current_user_email: str,
+    user_role: UserRole,
     project_id: str,
     db: Session,
     python_file: UploadFile = File(...),
 ):
-    # check permissions
-    # check if owner or admin
-    if not (
-        (user.is_admin_bool(current_user_email, db))
-        or (userproject.is_owner_bool(current_user_email, project_id, db))
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"User with email: {current_user_email} does not have permissions to update Project id: {project_id}!",
-        )
+    # check if "user" is owner
+    if user_role == UserRole.user:
+        is_owner = userproject.is_owner_bool(current_user_email, project_id, db)
+        if not is_owner:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"User {current_user_email} is not authorized to upload python scripts!",
+            )
 
     file_name = python_file.filename
     file_path = "./modelfiles/" + project_id + "/" + file_name
@@ -223,20 +229,19 @@ def validate_python_script(project_id: str, script_name: str):
 
 async def create_model_files(
     current_user_email: str,
+    user_role: UserRole,
     project_id: str,
     db: Session,
     model_files: List[UploadFile] = File(...),
 ):
-    # check permissions
-    # check if owner or admin
-    if not (
-        (user.is_admin_bool(current_user_email, db))
-        or (userproject.is_owner_bool(current_user_email, project_id, db))
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"User with email: {current_user_email} does not have permissions to update Project id: {project_id}!",
-        )
+    # check if "user" is owner
+    if user_role == UserRole.user:
+        is_owner = userproject.is_owner_bool(current_user_email, project_id, db)
+        if not is_owner:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"User {current_user_email} is not authorized to upload model files!",
+            )
 
     for model_file in model_files:
         file_name = model_file.filename

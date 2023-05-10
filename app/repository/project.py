@@ -1,10 +1,12 @@
 from fastapi import HTTPException, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from .. import schemas, models
 from . import user, files, userproject, runhistory
+from .user import UserRole
 import uuid
-from typing import List
+from typing import Optional, List
 import importlib
 import sys
 import os
@@ -13,24 +15,9 @@ from datetime import datetime
 import logging
 
 
-# get all projects from the database
+# get all projects from database
 def get_all(db: Session):
-    project_list = db.query(models.Project).all()
-    if not project_list:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No projects found in the database!",
-        )
-    return project_list
-
-
-# get all projects from database for external use by admin
-def get_all_exposed(user_email: str, db: Session):
-    # check if admin
-    user.is_admin(user_email, db)
     # list all projects
-    """ project_list = db.query(models.Project).all() """
-    """ user_id = user.get_by_email(user_email, db).user_id """
     project_list = (
         db.query(models.UserProject, models.Project, models.User)
         .where(models.UserProject.owner == True)
@@ -171,7 +158,9 @@ def get_by_id(project_id: str, db: Session):
     return project
 
 
-def get_by_id_exposed(user_email: str, project_id: str, db: Session):
+def get_by_id_exposed(
+    user_email: str, user_role: UserRole, project_id: str, db: Session
+):
     # check permissions
     # check if the project is public
     if not check_public_by_id_bool(project_id, db):
@@ -266,18 +255,7 @@ def create_project_entry(project_id: str, request: schemas.CreateProject, db: Se
     return new_project
 
 
-# useless since create_project_entry has been changed to add author when project is created
-def create_by_admin(user_email: str, request: schemas.CreateProject, db: Session):
-    project_id = str(uuid.uuid4().hex)
-    # check admin
-    user.is_admin(user_email, db)
-    user.get_by_id(request.user_id, db)
-    create_project_entry(project_id, request, db)
-    userproject.create_project_user_entry(request.user_id, project_id, db)
-    return {"project_id": project_id}
-
-
-def create_by_current(request: schemas.CreateProject, user_email: str, db: Session):
+def create(request: schemas.CreateProject, user_email: str, db: Session):
     project_id = str(uuid.uuid4().hex)
     user_object = user.get_by_email(user_email, db)
     create_project_entry(project_id, request, db)
@@ -292,7 +270,7 @@ def get_by_id(project_id: str, db: Session):
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Project with id number {project_id} was not found!",
+            detail=f"Project with id number {project_id} not found!",
         )
     return project
 
@@ -302,7 +280,7 @@ def get_query_by_id(project_id: str, db: Session):
     if not project.first():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Project with id number {project_id} was not found!",
+            detail=f"Project with id number {project_id} not found!",
         )
     return project
 
@@ -814,70 +792,64 @@ def delete_admin(user_email: str, project_id: str, db: Session):
     )
 
 
-def update_by_id_exposed(
-    user_email: str,
-    project_id: int,
-    title: str,
-    description: str,
-    input_type: str,
-    output_type: str,
-    is_private: bool,
+# update project by id
+def update_by_id(
     db: Session,
+    user_email: str,
+    user_role: UserRole,
+    project_id: int,
+    title: Optional[str] = None,
+    description: Optional[str] = None,
+    input_type: Optional[str] = None,
+    output_type: Optional[str] = None,
+    is_private: Optional[bool] = None,
 ):
-    # check permissions
-    # check if owner or admin
-    if not (
-        (user.is_admin_bool(user_email, db))
-        or (userproject.is_owner_bool(user_email, project_id, db))
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"User with email: {user_email} does not have permissions to update Project id: {project_id}!",
-        )
+    # check if "user" is owner
+    if user_role == UserRole.user:
+        is_owner = userproject.is_owner_bool(user_email, project_id, db)
+        if not is_owner:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"User {user_email} is not authorized to update Project {project_id}!",
+            )
     # check if project exists
     project = get_query_by_id(project_id, db)
-    # check what data has been provided in the request
     # check if all request fields are empty or null
-    if (
-        (title == "" or title == None)
-        and (description == "" or description == None)
-        and (input_type == "" or input_type == None)
-        and (output_type == "" or output_type == None)
-        and (is_private == "" or is_private == None)
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Request Project update fields are all empty!",
-        )
-    # if a request field is empty or null keep the previous value
-    # title
-    if title == "" or title == None:
-        title = project.first().title
-    # description
-    if description == "" or description == None:
-        description = project.first().description
-    # input_type
-    if input_type == "" or input_type == None:
-        input_type = project.first().input_type
-    # output_type
-    if output_type == "" or output_type == None:
-        output_type = project.first().output_type
-    # is_private
-    if is_private == "" or is_private == None:
-        is_private = project.first().is_private
-    # update project in database
     try:
-        project.update({"title": title})
-        project.update({"description": description})
-        project.update({"input_type": input_type})
-        project.update({"output_type": output_type})
-        project.update({"is_private": is_private})
-        project.update({"last_updated": datetime.now()})
-        db.commit()
-    except:
+        updates = {}
+        if title:
+            updates["title"] = title
+        if description:
+            updates["description"] = description
+        if input_type:
+            updates["input_type"] = input_type
+        if output_type:
+            updates["output_type"] = output_type
+        if is_private is not None:
+            updates["is_private"] = is_private
+        if not updates:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Request Project update fields are all empty!",
+            )
+    except SQLAlchemyError as e:
+        db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Project with id: {project_id} error updating database by User with email: {user_email}!",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating project information: {str(e)}",
+        )
+
+    # update project in database
+    # NOT TESTED
+    try:
+        updates["last_updated"] = datetime.now()
+        project.update(updates)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Project with id: {project_id} error updating database by User with email: {user_email}! {str(e)}",
         )
     return HTTPException(
         status_code=status.HTTP_200_OK,

@@ -104,8 +104,6 @@ class User(BaseModel):
 
 
 class ShowUser(BaseModel):
-    """user_id: str"""
-
     name: str
     email: str
 
@@ -216,17 +214,6 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: str
     role: str
-
-
-""" class ShowRunHistory(BaseModel):
-    run_history_id: int
-    fk_user_id: int
-    fk_project_id: str
-    fk_input_file_id: str
-    fk_output_file_id: Optional[str] = None
-    flagged: bool
-    flag_description: Optional[str] = None
-    timestamp: datetime """
 
 
 class ShowRunHistory(BaseModel):

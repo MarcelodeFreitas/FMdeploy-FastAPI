@@ -93,16 +93,16 @@ def get_owner(user_email: str, project_id: str, db):
 
 def is_owner_bool(user_email: str, project_id: str, db):
     user_id = user.get_by_email(user_email, db).user_id
-    entry = (
+    user_project = (
         db.query(models.UserProject)
         .where(models.UserProject.fk_user_id == user_id)
         .where(models.UserProject.fk_project_id == project_id)
         .with_entities(models.UserProject.owner)
         .first()
     )
-    if not entry:
+    if not user_project:
         return False
-    return entry.owner
+    return user_project.owner
 
 
 def delete(user_id: int, project_id: str, db: Session):
