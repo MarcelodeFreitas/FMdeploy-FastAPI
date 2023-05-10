@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from .. import models, hashing
 from . import project
 from enum import Enum
@@ -13,29 +14,11 @@ def get_role(db: Session, email: str):
     return user.role
 
 
-""" # get admin if is admin else http exception
-def is_admin(email: str, db):
-    # check user exists
-    user = get_by_email(email, db)
-    # check if it is an admin
-    if not user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"User with email: {email} is not an admin!",
-        )
-    return user
-
-
-# get admin boolean
-def is_admin_bool(email: str, db: Session):
-    user = get_by_email(email, db)
-    return user.is_admin """
-
-
 # get user by id
 def get_by_id(user_id: int, db: Session):
-    # get user by id
+    # get user by id from the database by id
     user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    # raise exception if user not found in database user table
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -45,8 +28,11 @@ def get_by_id(user_id: int, db: Session):
 
 
 # get user query by id needed for updates or deletes in the database
+# returns user instead of user.first()
 def get_user_query_by_id(user_id: int, db: Session):
+    # get user from the database by id
     user = db.query(models.User).filter(models.User.user_id == user_id)
+    # raise exception if user not found in database user table
     if not user.first():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -56,19 +42,27 @@ def get_user_query_by_id(user_id: int, db: Session):
 
 
 # create a user in the database with default role "guest"
+# since role is not provided it defaults to "guest"
 def create(name: str, email: str, password: str, db: Session):
+    # create a new user
     new_user = models.User(
         name=name, email=email, password=hashing.Hash.bcrypt(password)
     )
     try:
+        # add the new user to the database
         db.add(new_user)
         db.commit()
+        # refresh in order to return updated user information
+        # not sure if refresh is needed here
         db.refresh(new_user)
     except:
+        # raise exception if there is an error adding the user to the database
+        # the only case I foresee is if the email is already registered
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Email: {email}, is already registered!",
         )
+        # return updated user information
     return new_user
 
 
@@ -89,20 +83,20 @@ def create_with_role(db: Session, name: str, email: str, password: str, role: st
     return new_user
 
 
-# get all the user in the database
+# get a list of all the users in the database
 def get_all(db: Session):
     # get all users
     user_list = db.query(models.User).all()
+    # raise exception if no users found in database
     if not user_list:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"No users found in database!"
+            status_code=status.HTTP_404_NOT_FOUND, detail="No users found in database!"
         )
     return user_list
 
 
-# get current user by email
+# get user by email
 def get_by_email(email: str, db: Session):
-    # get user by email
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
         raise HTTPException(
@@ -112,22 +106,9 @@ def get_by_email(email: str, db: Session):
     return user
 
 
-# get user by email for external use by admin
-def get_by_email_exposed(user_email: str, email: str, db: Session):
-    """# check if admin
-    is_admin(user_email, db)"""
-    # get user by email
-    user = db.query(models.User).filter(models.User.email == email).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with email: {email} was not found!",
-        )
-    return user
-
-
 # get user query by email needed for updates or deletes in the database
 def get_user_query_by_email(user_email: str, db: Session):
+    # returns user instead of user.first()
     user = db.query(models.User).filter(models.User.email == user_email)
     if not user.first():
         raise HTTPException(
@@ -137,26 +118,8 @@ def get_user_query_by_email(user_email: str, db: Session):
     return user
 
 
-# delete user in user table and in userailist table by id
-def delete_user_by_id(user_id: int, db: Session):
-    # check if user exists
-    user = get_user_query_by_id(user_id, db)
-    # delete user
-    try:
-        user.delete(synchronize_session=False)
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Error deleting user with id: {user_id} from database!",
-        )
-    return HTTPException(
-        status_code=status.HTTP_200_OK,
-        detail=f"User with id: {user_id} was successfully deleted.",
-    )
-
-
-# delete user in user table and in userailist table by id
+# delete user in user table and in userproject table by id
+# confirm if it is actually deleting from userproject table!!!!!!!
 def delete_by_id(user_id: int, db: Session):
     # get the user object by id
     user = get_user_query_by_id(user_id, db)
@@ -175,7 +138,8 @@ def delete_by_id(user_id: int, db: Session):
     )
 
 
-# delete user in user table and in userailist table by email
+# delete user in user table and in userproject table by email
+# confirm if it is actually deleting from userproject table!!!!!!!
 def delete_by_email(user_email: str, db: Session):
     # get the user object using the email
     user = get_user_query_by_email(user_email, db)
@@ -197,7 +161,7 @@ def delete_by_email(user_email: str, db: Session):
 # delete current user, all models and modelfiles
 # delete user account
 def delete_current_account(current_user_email: str, db: Session):
-    # check if user exists
+    # get user by email
     user = get_by_email(current_user_email, db)
     user_id = user.user_id
     try:
@@ -208,7 +172,7 @@ def delete_current_account(current_user_email: str, db: Session):
             .where(models.UserProject.owner == True)
             .all()
         )
-        # delete all Project owned by the user
+        # delete all Projects owned by the user
         if len(project_list) > 0:
             for project_model in project_list:
                 project.delete(current_user_email, project_model.fk_project_id, db)
@@ -217,46 +181,15 @@ def delete_current_account(current_user_email: str, db: Session):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Error deleting Project and files for user with email: {current_user_email} !",
         )
-    # delete user from user and userailist tables
+    # delete user from user and userproject tables
     delete_by_email(current_user_email, db)
     return HTTPException(
         status_code=status.HTTP_200_OK, detail=f"User account successfuly deleted!"
     )
 
 
-# update user email or user name by id
-def update_by_id(user_id: int, user_email: str, user_name: str, db: Session):
-    # check if user exists
-    user = get_user_query_by_id(user_id, db)
-    # check what data has been provided in the request
-    if (user_email == "" or user_email == None) and (
-        user_name == "" or user_name == None
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Request user update fields are both empty!",
-        )
-    if user_email == "" or user_email == None:
-        user_email = user.first().email
-    if user_name == "" or user_name == None:
-        user_name = user.first().name
-    # update user in database
-    try:
-        user.update({"name": user_name})
-        user.update({"email": user_email})
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Email: {user_email}, is already registered!",
-        )
-    return HTTPException(
-        status_code=status.HTTP_200_OK,
-        detail=f"User with id: {user_id} was successfully updated.",
-    )
-
-
 # update current user information (name, email, password) by email
+# if email or password is changed then the user should be prompted to login again in the frontend
 def update_by_email(
     user_email: str, new_name: str, new_email: str, new_password: str, db: Session
 ):
@@ -264,27 +197,27 @@ def update_by_email(
     # get user by email
     user = get_user_query_by_email(user_email, db)
     # check what data has been provided in the request
-    if (
-        (new_email == "" or new_email == None)
-        and (new_name == "" or new_name == None)
-        and (new_password == "" or new_password == None)
-    ):
+    if not new_email and not new_name and not new_password:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Update fields are empty!"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Update fields are all empty!",
         )
     try:
+        updates = {}
         # if empty keep previous data
-        if new_email != "" and new_email != None:
-            user.update({"email": new_email})
-        if new_name != "" and new_name != None:
-            user.update({"name": new_name})
-        if new_password != "" and new_password != None:
-            user.update({"password": hashing.Hash.bcrypt(new_password)})
+        if new_email:
+            updates["email"] = new_email
+        if new_name:
+            updates["name"] = new_name
+        if new_password:
+            updates["password"] = hashing.Hash.bcrypt(new_password)
+        user.update(updates)
         db.commit()
-    except:
+    except SQLAlchemyError as e:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error updating user information!",
+            detail=f"Error updating user information: {str(e)}",
         )
     return HTTPException(
         status_code=status.HTTP_200_OK, detail=f"User data was successfully updated!"
@@ -319,31 +252,28 @@ def update_by_email_with_role(
     # get user by email
     user = get_user_query_by_email(current_email, db)
     # check what data has been provided in the request
-    if (
-        (new_email == "" or new_email == None)
-        and (new_name == "" or new_name == None)
-        and (new_password == "" or new_password == None)
-        and (new_role == "" or new_role == None)
-    ):
+    if not new_email and not new_name and not new_password and not new_role:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Update fields are empty!"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Update fields are all empty!",
         )
     try:
+        updates = {}
         # if empty keep previous data
-        if new_email != "" and new_email != None:
-            user.update({"email": new_email})
-        if new_name != "" and new_name != None:
-            user.update({"name": new_name})
-        if new_password != "" and new_password != None:
-            user.update({"password": hashing.Hash.bcrypt(new_password)})
-        if new_role != "" and new_role != None:
-            user.update({"role": new_role})
+        if new_email:
+            updates["email"] = new_email
+        if new_name:
+            updates["name"] = new_name
+        if new_password:
+            updates["password"] = hashing.Hash.bcrypt(new_password)
+        if new_role:
+            updates["role"] = new_role
+        user.update(updates)
         db.commit()
-        db.refresh(user)
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        """ raise HTTPException(
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error updating user information!",
-        ) """
+            detail=f"Error updating user information: {str(e)}",
+        )
     return user.first()
