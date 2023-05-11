@@ -9,17 +9,19 @@ router = APIRouter(prefix="/runhistory", tags=["Run History"])
 
 
 # get run history
+# authorization: any
 @router.get(
     "", status_code=status.HTTP_200_OK, response_model=List[schemas.ShowRunHistory]
 )
 def get_run_history(
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.get_current_user),
 ):
-    return runhistory.get_current(get_current_user, db)
+    return runhistory.get_current(current_user.email, db)
 
 
 # get flagged outputs for project
+# authorization: admin or user that owns the project
 @router.get(
     "/flagged/{project_id}",
     status_code=status.HTTP_200_OK,
@@ -36,6 +38,7 @@ def get_flagged_outputs(
 
 
 # update flag and flag description in run history table entry
+# athorization: any + login required
 @router.put("/flag", status_code=status.HTTP_202_ACCEPTED)
 def flag_run_history_entry(
     request: schemas.RunHistoryFlagInput,
