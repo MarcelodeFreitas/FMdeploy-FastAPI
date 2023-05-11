@@ -72,8 +72,8 @@ def get_all_public(db: Session):
     return project_list
 
 
-# get all public projects from database for external use by admin
-def get_public_by_id_exposed(project_id: str, db: Session):
+# get public project by id
+def get_public_by_id(project_id: str, db: Session):
     project = (
         db.query(models.UserProject, models.Project, models.User)
         .where(models.Project.project_id == project_id)
@@ -101,7 +101,8 @@ def get_public_by_id_exposed(project_id: str, db: Session):
     return project
 
 
-def get_public_by_title_exposed(title: str, db: Session):
+# get public project by title
+def get_public_by_title(title: str, db: Session):
     project = (
         db.query(models.UserProject, models.Project, models.User)
         .where(models.Project.is_private.is_(False))
@@ -124,11 +125,12 @@ def get_public_by_title_exposed(title: str, db: Session):
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Project with title: {title} was not found!",
+            detail=f"Project with title: {title} was not found in Public Projects!",
         )
     return project
 
 
+# get project by id for internal user
 def get_by_id(project_id: str, db: Session):
     # get project and author by project id
     project = (
@@ -158,16 +160,17 @@ def get_by_id(project_id: str, db: Session):
     return project
 
 
+# get project by id for admin, user or guest with access to the project
 def get_by_id_exposed(
     user_email: str, user_role: UserRole, project_id: str, db: Session
 ):
     # check permissions
     # check if the project is public
     if not check_public_by_id_bool(project_id, db):
-        # check if owner or admin or beneficiary
+        # check if owner or admin or beneficiary (guest with access to the project)
         user_id = user.get_by_email(user_email, db).user_id
         if not (
-            (user.is_admin_bool(user_email, db))
+            (user_role == "admin")
             or (userproject.is_owner_bool(user_email, project_id, db))
             or (userproject.check_access(user_id, project_id, db))
         ):
@@ -203,9 +206,7 @@ def get_by_id_exposed(
     return project
 
 
-def get_by_title_exposed(user_email: str, title: str, db: Session):
-    # check if admin
-    user.is_admin(user_email, db)
+def get_by_title_exposed(title: str, db: Session):
     project_list = (
         db.query(models.UserProject, models.Project, models.User)
         .where(models.UserProject.owner == True)
@@ -228,7 +229,7 @@ def get_by_title_exposed(user_email: str, title: str, db: Session):
     if not project_list:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Project with title: {title} was not found!",
+            detail=f"Project with title '{title}' was not found!",
         )
     return project_list
 
@@ -297,7 +298,13 @@ def check_public_by_id_bool(project_id: str, db: Session):
     return True
 
 
-async def run(user_email: str, project_id: str, input_file_id: str, db: Session):
+async def run(
+    user_email: str,
+    user_role: UserRole,
+    project_id: str,
+    input_file_id: str,
+    db: Session,
+):
     # check if the user id provided exists
     user_id = user.get_by_email(user_email, db).user_id
     # check if the project id provided exists
@@ -308,7 +315,7 @@ async def run(user_email: str, project_id: str, input_file_id: str, db: Session)
         # check if owner or admin or beneficiary
         user_id = user.get_by_email(user_email, db).user_id
         if not (
-            (user.is_admin_bool(user_email, db))
+            (user_role == "admin")
             or (userproject.is_owner_bool(user_email, project_id, db))
             or (userproject.check_access(user_id, project_id, db))
         ):
@@ -697,14 +704,22 @@ def run_simple_script(
     return output_directory_path + output_file_name
 
 
-def delete(user_email: str, project_id: str, db: Session):
-    # check if the project exists
-    get_by_id(project_id, db)
+# delete project from database
+# admin can delete project
+# the owner can delete project
+def delete(user_email: str, user_role: UserRole, project_id: str, db: Session):
     # get current user id
     user_id = user.get_by_email(user_email, db).user_id
     # check permissions
-    # only the owner can delete project
-    userproject.check_owner(user_id, project_id, db)
+    # admin can delete any project
+    # user owner can delete project
+    if not (user_role == "admin") or (userproject.check_owner(user_id, project_id, db)):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"User with id {user_id} is not authorized to delete project with id {project_id}!",
+        )
+    # check if the project exists
+    get_by_id(project_id, db)
     # delete project from database
     project = db.query(models.Project).filter(models.Project.project_id == project_id)
     if not project.first():
@@ -726,6 +741,7 @@ def delete(user_email: str, project_id: str, db: Session):
     # deleter from ModelFile table
     # not needed because its deleted by cascade
     # files.delete_model_files(project_id, db)
+
     # delete project folder from filesystem
     path = "./modelfiles/" + project_id
     if not os.path.isdir(path):
@@ -746,7 +762,7 @@ def delete(user_email: str, project_id: str, db: Session):
     )
 
 
-def delete_admin(user_email: str, project_id: str, db: Session):
+""" def delete_admin(user_email: str, project_id: str, db: Session):
     # check if admin
     user.is_admin(user_email, db)
     # check if the project exists
@@ -789,7 +805,7 @@ def delete_admin(user_email: str, project_id: str, db: Session):
     return HTTPException(
         status_code=status.HTTP_200_OK,
         detail=f"The Project id {project_id} was successfully deleted.",
-    )
+    ) """
 
 
 # update project by id

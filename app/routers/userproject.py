@@ -35,37 +35,53 @@ def get_list_of_projects_owned_by_user(
     return userproject.owned(current_user.email, db)
 
 
+# share a project with a specific user by providing their email
+# authorization: admin or user that owns the project
 @router.post("/share", status_code=status.HTTP_200_OK)
 def share_project(
     request: schemas.ShareProject,
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.this_user_or_admin),
 ):
     return userproject.share_exposed(
-        get_current_user, request.beneficiary_email, request.project_id, db
+        current_user.email,
+        current_user.role,
+        request.beneficiary_email,
+        request.project_id,
+        db,
     )
 
 
+# cancel sharing a project with a specific user by providing their email
+# authorization: admin or user that owns the project
 @router.post("/cancel_share", status_code=status.HTTP_200_OK)
 def cancel_share_project(
     request: schemas.ShareProject,
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.this_user_or_admin),
 ):
     return userproject.user_cancel_share(
-        get_current_user, request.beneficiary_email, request.project_id, db
+        current_user.email,
+        current_user.role,
+        request.beneficiary_email,
+        request.project_id,
+        db,
     )
 
 
+# check if the project is shared with the user
+# authorization: any + login required
 @router.post("/is_shared", status_code=status.HTTP_200_OK)
 def check_if_project_is_shared_with_user(
     request: schemas.UserProject,
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.get_current_user),
 ):
     return userproject.check_shared(request.user_id, request.project_id, db)
 
 
+# get the list of projects shared with the user
+# authorization: any + login required
 @router.get(
     "/shared_list",
     status_code=status.HTTP_200_OK,
@@ -73,29 +89,37 @@ def check_if_project_is_shared_with_user(
 )
 def get_list_of_projects_shared_with_user(
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.get_current_user),
 ):
-    return userproject.shared_projects_exposed(get_current_user, db)
+    return userproject.shared_projects_exposed(current_user.email, db)
 
 
+# get the list of user with which the project is shared
+# authorization: admin or user that owns the project
 @router.get("/beneficiaries/{project_id}", status_code=status.HTTP_200_OK)
 def get_list_of_beneficiaries_by_project(
     project_id: str,
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.this_user_or_admin),
 ):
-    return userproject.check_beneficiaries(project_id, get_current_user, db)
+    return userproject.check_beneficiaries(
+        project_id, current_user.email, current_user.role, db
+    )
 
 
+# get the list of projects shared with a user by id
+# authorization: admin
 @router.get("/admin/shared_list/{user_id}", status_code=status.HTTP_200_OK)
 def get_list_of_projects_shared_with_user_id(
     user_id: int,
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.this_admin),
 ):
     return userproject.shared_projects(user_id, db)
 
 
+# get the project owner by project id
+# authorization: any + login required
 @router.get(
     "/get_owner/{project_id}",
     status_code=status.HTTP_202_ACCEPTED,
@@ -104,6 +128,6 @@ def get_list_of_projects_shared_with_user_id(
 def get_owner_name_by_project_id(
     project_id: str,
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.get_current_user),
 ):
-    return userproject.get_owner(get_current_user, project_id, db)
+    return userproject.get_owner(current_user.email, project_id, db)

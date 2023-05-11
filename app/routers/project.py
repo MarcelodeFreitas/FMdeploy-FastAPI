@@ -76,9 +76,9 @@ def get_all_public_projects(
 def get_public_project_by_id(
     project_id: str,
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.get_current_user),
 ):
-    return project.get_public_by_id_exposed(project_id, db)
+    return project.get_public_by_id(project_id, db)
 
 
 # get public project by title
@@ -93,25 +93,39 @@ def get_public_project_by_title(
     db: Session = Depends(get_db),
     current_user: schemas.User = Depends(oauth2.get_current_user),
 ):
-    return project.get_public_by_title_exposed(title, db)
+    return project.get_public_by_title(title, db)
 
 
 # get project by id
-# authorization: admin or user who created the project
+# authorization: admin, user or guest with access to the project
+# TEST authorization pending
 @router.get(
     "/{project_id}", status_code=status.HTTP_200_OK, response_model=schemas.ShowProject
 )
 def get_project_by_id(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: schemas.User = Depends(oauth2.this_user_or_admin),
+    current_user: schemas.User = Depends(oauth2.get_current_user),
 ):
     return project.get_by_id_exposed(
         current_user.email, current_user.role, project_id, db
     )
 
 
+# delete project from database tables and filesystem
+# authorization: admin or user who created the project
+# TEST authorization pending and cascades, delete all runhistory?
+@router.delete("/{project_id}", status_code=status.HTTP_200_OK)
+def delete_project(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(oauth2.this_user_or_admin),
+):
+    return project.delete(current_user.email, current_user.role, project_id, db)
+
+
 # get project by title
+# authorization: admin
 @router.get(
     "/admin/title/{title}",
     status_code=status.HTTP_200_OK,
@@ -120,38 +134,35 @@ def get_project_by_id(
 def get_project_by_title(
     title: str,
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.this_admin),
 ):
-    return project.get_by_title_exposed(get_current_user, title, db)
+    return project.get_by_title_exposed(title, db)
 
 
-# delete project from database tables and filesystem
-@router.delete("/{project_id}", status_code=status.HTTP_200_OK)
-def delete_project(
-    project_id: str,
-    db: Session = Depends(get_db),
-    current_user: schemas.User = Depends(oauth2.get_current_user),
-):
-    return project.delete(current_user.email, project_id, db)
-
-
-# delete project from database tables and filesystem
+""" # delete project from database tables and filesystem
 @router.delete("/admin/{project_id}", status_code=status.HTTP_200_OK)
 def delete_project_admin(
     project_id: str,
     db: Session = Depends(get_db),
     get_current_user: schemas.User = Depends(oauth2.get_current_user),
 ):
-    return project.delete_admin(get_current_user, project_id, db)
+    return project.delete_admin(get_current_user, project_id, db) """
 
 
 # run an project with current user
+# authorization:
+# if public project: any + login required
+# if private project: admin, user or guest with access to the project
 @router.post("/run", status_code=status.HTTP_202_ACCEPTED)
 async def run_project(
     request: schemas.RunProject,
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.get_current_user),
 ):
     return await project.run(
-        get_current_user, request.project_id, request.input_file_id, db
+        current_user.email,
+        current_user.role,
+        request.project_id,
+        request.input_file_id,
+        db,
     )

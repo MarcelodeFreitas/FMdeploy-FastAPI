@@ -28,9 +28,11 @@ def get_run_history(
 def get_flagged_outputs(
     project_id,
     db: Session = Depends(get_db),
-    get_current_user: schemas.User = Depends(oauth2.get_current_user),
+    current_user: schemas.User = Depends(oauth2.this_user_or_admin),
 ):
-    return runhistory.get_project_flagged_outputs(db, get_current_user, project_id)
+    return runhistory.get_project_flagged_outputs(
+        db, current_user.email, current_user.role, project_id
+    )
 
 
 # update flag and flag description in run history table entry

@@ -5,7 +5,7 @@ from .. import schemas, models
 from . import user, userproject
 from datetime import datetime
 from typing import Optional
-import logging
+from .user import UserRole
 
 
 # get run hitory for current user
@@ -53,13 +53,15 @@ def get_current(user_email: str, db: Session):
 
 
 # get run history of flagged outputs for a specific project and check if owner
-def get_project_flagged_outputs(db: Session, user_email: str, project_id: str):
+def get_project_flagged_outputs(
+    db: Session, user_email: str, user_role: UserRole, project_id: str
+):
     """# get user id from user email
     user_id = user.get_by_email(user_email, db).user_id"""
     # check permissions
     # check if owner or admin
     if not (
-        (user.is_admin_bool(user_email, db))
+        (user_role == "admin")
         or (userproject.is_owner_bool(user_email, project_id, db))
     ):
         raise HTTPException(

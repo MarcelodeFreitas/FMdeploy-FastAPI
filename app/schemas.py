@@ -169,6 +169,7 @@ class Owner(BaseModel):
 
 class ShowOwner(BaseModel):
     name: str
+    email: str
 
 
 class ModelFile(BaseModel):

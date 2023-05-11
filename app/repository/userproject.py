@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from .. import models
 from . import project, user, userproject
+from .user import UserRole
 
 
 def check_access_exception(user_id: int, project_id: str, db):
@@ -81,12 +82,13 @@ def get_owner(user_email: str, project_id: str, db):
             )
         )
         .outerjoin(models.UserProject)
-        .with_entities(models.User.name)
+        .with_entities(models.User.name, models.User.email)
         .first()
     )
     if not user_query:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"error get_owner!"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Error getting owner for project '{project_id}'!",
         )
     return user_query
 
@@ -184,8 +186,13 @@ def share(user_id_sharer: int, user_id_beneficiary: int, project_id: str, db: Se
     return new_entry
 
 
+# share a project with another user by email
 def share_exposed(
-    current_user_email: str, beneficiary_email: str, project_id: str, db: Session
+    current_user_email: str,
+    user_role: UserRole,
+    beneficiary_email: str,
+    project_id: str,
+    db: Session,
 ):
     # check if current_user_email is the same as beneficiary_email
     if current_user_email == beneficiary_email:
@@ -195,6 +202,7 @@ def share_exposed(
         )
     # check if the project exists
     project_object = project.get_by_id(project_id, db)
+    # check if the project is private
     if not (project_object.is_private):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -203,7 +211,7 @@ def share_exposed(
     # check permissions
     # check if owner or admin
     if not (
-        (user.is_admin_bool(current_user_email, db))
+        (user_role == "admin")
         or (userproject.is_owner_bool(current_user_email, project_id, db))
     ):
         raise HTTPException(
@@ -232,8 +240,13 @@ def share_exposed(
     return f"Project id:  {project_id}, shared with {beneficiary_email}"
 
 
+# cancel a project share with another user by email
 def user_cancel_share(
-    current_user_email: str, beneficiary_email: str, project_id: str, db: Session
+    current_user_email: str,
+    user_role: UserRole,
+    beneficiary_email: str,
+    project_id: str,
+    db: Session,
 ):
     # check if the project exists
     project_object = project.get_by_id(project_id, db)
@@ -245,15 +258,13 @@ def user_cancel_share(
     # check permissions
     # check if owner or admin
     if not (
-        (user.is_admin_bool(current_user_email, db))
+        (user_role == "admin")
         or (userproject.is_owner_bool(current_user_email, project_id, db))
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"User with email: {current_user_email} does not have permissions to share Project id: {project_id}!",
         )
-    # check the user exists
-    user_id_sharer = user.get_by_email(current_user_email, db).user_id
     # check user beneficiary exists
     user_id_beneficiary = user.get_by_email(beneficiary_email, db).user_id
     # check if it is shared with this user
@@ -332,7 +343,7 @@ def shared_projects(user_id: int, db: Session):
 
 
 def shared_projects_exposed(current_user_email: str, db: Session):
-    # check the user exists
+    # get the user id
     user_id = user.get_by_email(current_user_email, db).user_id
     # get entries where user is the beneficiary from UserProject
     userproject = (
@@ -378,12 +389,13 @@ def create_project_user_entry(user_id: str, project_id: int, db: Session):
 
 
 # get the list of user that a certain Project has been shared with
-def check_beneficiaries(project_id: str, current_user_email: str, db: Session):
+def check_beneficiaries(
+    project_id: str, current_user_email: str, user_role: UserRole, db: Session
+):
     # check credentials
     # check if owner or admin
     if not (
-        (user.is_admin_bool(current_user_email, db))
-        or (is_owner_bool(current_user_email, project_id, db))
+        (user_role == "admin") or (is_owner_bool(current_user_email, project_id, db))
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
