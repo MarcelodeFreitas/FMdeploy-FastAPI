@@ -331,15 +331,15 @@ async def run(
     # check that the python script files exist in the filesystem
     python_file = check_python_files(project_id, db)
     print("CHECK MODEL FILES EXIST: ", files.check_model_files_bool(project_id, db))
+    # register in the run history table
+    run_history_id = runhistory.create_entry(
+        db, user_id, project_id, input_file_id, None, False, None
+    )
     # check if this is a Project with or without modelfiles
     if files.check_model_files_bool(project_id, db):
         # check if the table modelfile has files associated with this project
         # check if those files exist in the file system
         model_files = files.check_model_files(project_id, db)
-        # register in the run history table
-        run_history_id = runhistory.create_entry(
-            db, user_id, project_id, input_file_id, None, False, None
-        )
         try:
             # run the project
             output_file_path = run_script(
