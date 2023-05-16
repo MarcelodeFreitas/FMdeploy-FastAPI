@@ -170,9 +170,9 @@ def get_by_id_exposed(
         # check if owner or admin or beneficiary (guest with access to the project)
         user_id = user.get_by_email(user_email, db).user_id
         if not (
-            (user_role == "admin")
-            or (userproject.is_owner_bool(user_email, project_id, db))
-            or (userproject.check_access(user_id, project_id, db))
+            user_role == "admin"
+            or userproject.is_owner_bool(user_email, project_id, db)
+            or userproject.check_access(user_id, project_id, db)
         ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -315,9 +315,9 @@ async def run(
         # check if owner or admin or beneficiary
         user_id = user.get_by_email(user_email, db).user_id
         if not (
-            (user_role == "admin")
-            or (userproject.is_owner_bool(user_email, project_id, db))
-            or (userproject.check_access(user_id, project_id, db))
+            user_role == "admin"
+            or userproject.is_owner_bool(user_email, project_id, db)
+            or userproject.check_access(user_id, project_id, db)
         ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -713,7 +713,8 @@ def delete(user_email: str, user_role: UserRole, project_id: str, db: Session):
     # check permissions
     # admin can delete any project
     # user owner can delete project
-    if not (user_role == "admin") or (userproject.check_owner(user_id, project_id, db)):
+    if not (user_role == "admin" or userproject.check_owner(user_id, project_id, db)):
+        print("User is not authorized to delete project!")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"User with id {user_id} is not authorized to delete project with id {project_id}!",

@@ -61,8 +61,7 @@ def get_project_flagged_outputs(
     # check permissions
     # check if owner or admin
     if not (
-        (user_role == "admin")
-        or (userproject.is_owner_bool(user_email, project_id, db))
+        user_role == "admin" or userproject.is_owner_bool(user_email, project_id, db)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

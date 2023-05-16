@@ -211,8 +211,8 @@ def share_exposed(
     # check permissions
     # check if owner or admin
     if not (
-        (user_role == "admin")
-        or (userproject.is_owner_bool(current_user_email, project_id, db))
+        user_role == "admin"
+        or userproject.is_owner_bool(current_user_email, project_id, db)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -258,8 +258,8 @@ def user_cancel_share(
     # check permissions
     # check if owner or admin
     if not (
-        (user_role == "admin")
-        or (userproject.is_owner_bool(current_user_email, project_id, db))
+        user_role == "admin"
+        or userproject.is_owner_bool(current_user_email, project_id, db)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -394,9 +394,7 @@ def check_beneficiaries(
 ):
     # check credentials
     # check if owner or admin
-    if not (
-        (user_role == "admin") or (is_owner_bool(current_user_email, project_id, db))
-    ):
+    if not (user_role == "admin" or is_owner_bool(current_user_email, project_id, db)):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"User with email: {current_user_email} does not have permissions to check beneficiaries of Project id: {project_id}!",
