@@ -150,11 +150,11 @@ class UpdateUser(BaseModel):
 
 
 class UpdateUserAdmin(BaseModel):
-    current_email: str
+    user_email: str
     new_name: Optional[str] = None
     new_email: Optional[str] = None
     new_password: Optional[str] = None
-    new_role: Optional[constr(regex="^(admin|guest|user)$")] = None
+    new_role: Optional[constr(regex="^(admin|guest|user)?$")] = None
 
     class Config:
         orm_mode = True

@@ -28,7 +28,12 @@ def login_user(
     access_token = token.create_access_token(
         data={"sub": user.email, "role": user.role}
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    print(user.role)
+    return {
+        "access_token": access_token,
+        "user_role": user.role,
+        "token_type": "bearer",
+    }
 
 
 @router.get("/login")

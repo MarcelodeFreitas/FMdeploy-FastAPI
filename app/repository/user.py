@@ -4,6 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from .. import models, hashing
 from . import project
 from enum import Enum
+from typing import Optional
 
 
 # get user role
@@ -232,12 +233,12 @@ class UserRole(str, Enum):
 
 # update current user information with role (name, email, password, and role) by email
 def update_by_email_with_role(
+    db: Session,
     current_email: str,
     new_name: str,
     new_email: str,
     new_password: str,
-    new_role: UserRole,
-    db: Session,
+    new_role: Optional[UserRole] = None,
 ):
     print(
         "NAME: ",

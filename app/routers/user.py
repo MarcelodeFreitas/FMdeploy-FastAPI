@@ -89,12 +89,12 @@ def update_user(
     current_user: schemas.User = Depends(oauth2.this_admin),
 ):
     return user.update_by_email_with_role(
-        request.current_email,
+        db,
+        request.user_email,
         request.new_name,
         request.new_email,
         request.new_password,
         request.new_role,
-        db,
     )
 
 
