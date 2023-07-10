@@ -359,38 +359,6 @@ async def run(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="There is no output file!",
                 )
-            """ if project.output_type == ".nii.gz":
-                return FileResponse(
-                    output_file_path + project.output_type,
-                    media_type="application/gzip",
-                    filename="result_"
-                    + input_file_name_no_extension
-                    + project.output_type,
-                )
-            elif project.output_type == ".csv":
-                return FileResponse(
-                    output_file_path + project.output_type,
-                    media_type="text/csv",
-                    filename="result_"
-                    + input_file_name_no_extension
-                    + project.output_type,
-                )
-            elif project.output_type == ".png":
-                return FileResponse(
-                    output_file_path + project.output_type,
-                    media_type="image/png",
-                    filename="result_"
-                    + input_file_name_no_extension
-                    + project.output_type,
-                )
-            elif project.output_type == ".wav":
-                return FileResponse(
-                    output_file_path + project.output_type,
-                    media_type="audio/wav",
-                    filename="result_"
-                    + input_file_name_no_extension
-                    + project.output_type,
-                ) """
             media_type_dict = {
                 ".nii.gz": ("application/gzip", ".nii.gz"),
                 ".csv": ("text/csv", ".csv"),
@@ -445,38 +413,6 @@ async def run(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="There is no output file!",
                 )
-            """ if project.output_type == ".nii.gz":
-                return FileResponse(
-                    output_file_path + project.output_type,
-                    media_type="application/gzip",
-                    filename="result_"
-                    + input_file_name_no_extension
-                    + project.output_type,
-                )
-            elif project.output_type == ".csv":
-                return FileResponse(
-                    output_file_path + project.output_type,
-                    media_type="text/csv",
-                    filename="result_"
-                    + input_file_name_no_extension
-                    + project.output_type,
-                )
-            elif project.output_type == ".png":
-                return FileResponse(
-                    output_file_path + project.output_type,
-                    media_type="image/png",
-                    filename="result_"
-                    + input_file_name_no_extension
-                    + project.output_type,
-                )
-            elif project.output_type == ".wav":
-                return FileResponse(
-                    output_file_path + project.output_type,
-                    media_type="audio/wav",
-                    filename="result_"
-                    + input_file_name_no_extension
-                    + project.output_type,
-                ) """
             media_type_dict = {
                 ".nii.gz": ("application/gzip", ".nii.gz"),
                 ".csv": ("text/csv", ".csv"),
