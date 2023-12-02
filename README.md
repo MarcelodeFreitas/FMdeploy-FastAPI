@@ -5,6 +5,7 @@ This repository contains the backend implementation of FMdeploy, developed as pa
 - **Name:** Marcelo Marreiros
 - **Email:** marcelodefreitas25@gmail.com
 - **Supervisor:** Victor Alves
+- **Dissertation Title:** FMdeploy - Simplifying Machine Learning Deployment for Academia via Web Interfaces
 
 ## Description
 
@@ -17,3 +18,5 @@ FMdeploy is a comprehensive platform designed to facilitate the deployment of ma
 ## Contact Information
 
 For any inquiries or further information, please contact Marcelo Marreiros at marcelodefreitas25@gmail.com.
+
+Thank you for your interest in FMdeploy-FastAPI!
